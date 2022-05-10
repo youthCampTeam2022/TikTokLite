@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TikTokLite/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -8,6 +9,18 @@ import (
 //登录
 //注册
 //获取用户信息
+
+type UserLoginResponse struct {
+	service.Response
+	UserId int64  `json:"user_id,omitempty"`
+	Token  string `json:"token"`
+}
+
+type UserResponse struct {
+	service.Response
+	User service.User `json:"user"`
+}
+
 
 func Register(c *gin.Context) {
 
