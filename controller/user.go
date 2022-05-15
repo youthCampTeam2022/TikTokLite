@@ -3,6 +3,8 @@ package controller
 import (
 	"TikTokLite/service"
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"strconv"
 )
 
 //user:关于用户本身的接口
@@ -10,26 +12,82 @@ import (
 //注册
 //获取用户信息
 
-type UserLoginResponse struct {
-	service.Response
-	UserId int64  `json:"user_id,omitempty"`
-	Token  string `json:"token"`
+//type UserResponse struct {
+//	service.Response
+//	User service.User `json:"user"`
+//}
+
+//UserController 用户注册登录，获取信息控制器
+type UserController struct {
+	//继承user service服务
+	service service.IUserService
 }
 
-type UserResponse struct {
-	service.Response
-	User service.User `json:"user"`
+func NewUserController() *UserController {
+	return &UserController{
+		service: service.NewUserService(),
+	}
 }
 
-
-func Register(c *gin.Context) {
-
+//返回错误resp
+func sendErrResponse(c *gin.Context, resp service.Response) {
+	c.JSON(http.StatusOK, gin.H{
+		"status_code": resp.StatusCode,
+		"status_msg":  resp.StatusMsg,
+	})
 }
 
-func Login(c *gin.Context) {
-
+//Register 用户注册
+func (uc *UserController) Register(c *gin.Context) {
+	var req service.UserLoginOrRegisterRequest
+	req.Name, _ = c.GetQuery("username")
+	req.Password, _ = c.GetQuery("password")
+	//fmt.Println(req) ///
+	resp, err := uc.service.UserRegister(&req)
+	if err != nil {
+		sendErrResponse(c, resp.Response)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status_code": resp.StatusCode,
+		"status_msg":  resp.StatusMsg,
+		"user_id":     resp.UserId,
+		"token":       resp.Token,
+	})
 }
 
-func UserInfo(c *gin.Context) {
+//Login 用户登录
+func (uc *UserController) Login(c *gin.Context) {
+	var req service.UserLoginOrRegisterRequest
+	req.Name, _ = c.GetQuery("username")
+	req.Password, _ = c.GetQuery("password")
+	resp, err := uc.service.UserLogin(&req)
+	if err != nil {
+		sendErrResponse(c, resp.Response)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status_code": resp.StatusCode,
+		"status_msg":  resp.StatusMsg,
+		"user_id":     resp.UserId,
+		"token":       resp.Token,
+	})
+}
 
+//UserInfo 获取用户信息
+func (uc *UserController) UserInfo(c *gin.Context) {
+	var req service.UserInfoRequest
+	idStr, _ := c.GetQuery("user_id")
+	req.UserId, _ = strconv.ParseInt(idStr, 10, 64)
+	req.Token, _ = c.GetQuery("token")
+	resp, err := uc.service.UserInfo(&req)
+	if err != nil {
+		sendErrResponse(c, resp.Response)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status_code": resp.StatusCode,
+		"status_msg":  resp.StatusMsg,
+		"user":        resp.User,
+	})
 }
