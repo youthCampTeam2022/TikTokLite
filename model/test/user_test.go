@@ -28,7 +28,6 @@ func TestMain(m *testing.M) {
 	//把匹配器设置成相等匹配器，不设置默认使用正则匹配
 	db, mock, err = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-
 		panic(err)
 	}
 	model.DB, err = gorm.Open(mysql.New(mysql.Config{
