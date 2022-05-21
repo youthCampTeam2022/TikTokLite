@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TikTokLite/model"
 	"TikTokLite/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 
 type CommentListResponse struct {
 	service.Response
-	CommentList []service.Comment `json:"comment_list,omitempty"`
+	CommentList []model.CommentRes `json:"comment_list,omitempty"`
 }
 
 func CommentAction(c *gin.Context) {
@@ -71,11 +72,12 @@ func CommentList(c *gin.Context) {
 	//过验证
 	videoID, _ := strconv.Atoi(videoIDQuery)
 	//userID, _ := strconv.Atoi(userIDQuery)
-	comments,err := service.GetComment(int64(videoID))
+	//comments,err := service.GetComment(int64(videoID))
+	comments,err := service.GetCommentByJoin(int64(videoID))
 	if err != nil{
 		c.JSON(http.StatusInternalServerError,CommentListResponse{
 			Response:    service.Response{StatusCode: 1, StatusMsg: "err in get comment"},
-			CommentList: []service.Comment{},
+			CommentList: []model.CommentRes{},
 		})
 		return
 	}
