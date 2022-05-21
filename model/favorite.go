@@ -18,8 +18,10 @@ func (f *Favorite) Delete() error {
 	return DB.Delete(&f).Error
 }
 
-func GetFavoriteNum(videoID int64) int {
-	return 0
+func GetFavoriteNum(videoID int64) (count int64) {
+	DB.Model(&Favorite{}).Where("video_id = ?", videoID).Count(&count)
+	return
+
 }
 
 func (f *Favorite) GetFavoriteList() ([]int64, error) {

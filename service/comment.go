@@ -35,6 +35,11 @@ func GetComment(videoID int64) ([]Comment,error) {
 	return commentResult,nil
 }
 
+// GetCommentByJoin 改用联查的版本，原来的太蠢了
+func GetCommentByJoin(videoID int64) ([]model.CommentRes,error)  {
+	return model.GetCommentRes(videoID)
+}
+
 func CreateComment(videoID,userID int64,text string) error {
 	c := model.Comment{
 		VideoID: videoID,
