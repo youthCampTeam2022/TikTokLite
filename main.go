@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func main()  {
-	model.MysqlInit()
+func main() {
+	model.Init()
 	r := gin.Default()
 	router.RouterInit(r)
 	r.Run()

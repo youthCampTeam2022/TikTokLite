@@ -2,6 +2,7 @@ package router
 
 import (
 	"TikTokLite/controller"
+	"TikTokLite/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,7 +29,8 @@ func RouterInit(r *gin.Engine) {
 	apiRouter.GET("/comment/list/", controller.CommentList)
 
 	// extra apis - II
-	apiRouter.POST("/relation/action/", controller.RelationAction)
-	apiRouter.GET("/relation/follow/list/", controller.FollowList)
-	apiRouter.GET("/relation/follower/list/", controller.FollowerList)
+	rc := controller.NewRelationController()
+	apiRouter.POST("/relation/action/", middleware.ValidDataTokenMiddleWare, rc.RelationAction)
+	apiRouter.GET("/relation/follow/list/", middleware.ValidDataTokenMiddleWare, rc.FollowList)
+	apiRouter.GET("/relation/follower/list/", middleware.ValidDataTokenMiddleWare, rc.FollowerList)
 }

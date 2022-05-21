@@ -7,7 +7,9 @@ import (
 	"time"
 )
 
-var SecretKey = []byte("djwlqjsk-dwqjdk2k3u-vmsdmw-342f-ewrk-nk23u2i4")
+const (
+	SecretKey = "0SFWF023423dhwq"
+)
 
 type Response struct {
 	StatusCode int32  `json:"status_code"`
@@ -39,6 +41,27 @@ type User struct {
 	IsFollow      bool   `json:"is_follow,omitempty"`
 }
 
+//BuildUserList 通用接口，传入user_id集合和follow仓库接口，返回[]User（Id，Name，FollowCount，FollowerCount，IsFollow）
+func BuildUserList(userID int64, userIDList []int64, m model.IFollowRepository) []User {
+	Users := make([]User, len(userIDList))
+	for i := 0; i < len(userIDList); i++ {
+		Users[i] = BuildUser(userID, userIDList[i], m)
+	}
+	return Users
+}
+
+/*BuildUser 返回User（Id，Name，FollowCount，FollowerCount，IsFollow）
+userID是当前用户的id，toUserID是要查询的ID，m是follow仓库的接口*/
+func BuildUser(userID, toUserID int64, m model.IFollowRepository) User {
+	var user User
+	user.Id = toUserID
+	user.Name = m.GetName(toUserID)
+	user.IsFollow = m.RedisIsFollow(userID, toUserID)
+	user.FollowCount = m.RedisFollowCount(toUserID)
+	user.FollowerCount = m.RedisFollowerCount(toUserID)
+	return user
+}
+
 //BuildResponse 根据err返回对应的Response
 func BuildResponse(err error) Response {
 	resp := Response{}
@@ -54,17 +77,23 @@ func BuildResponse(err error) Response {
 	return resp
 }
 
+//Claims token claims
+type Claims struct {
+	Username string `json:"username"`
+	UserID   int64  `json:"user_id"`
+	jwt.StandardClaims
+}
+
 //GetToken 获取对应user的token
 func GetToken(u *model.User) (tokenString string, rep Response, err error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	var claims = make(jwt.MapClaims)
-	claims["user_name"] = u.Name
-	claims["user_id"] = u.ID
+	var claims Claims
+	claims.Username = u.Name
+	claims.UserID = int64(u.ID)
 	//token过期时间
-	claims["exp"] = time.Now().Add(time.Hour * time.Duration(24)).Unix()
+	claims.ExpiresAt = time.Now().Add(time.Hour * time.Duration(24)).Unix()
 	//token创建时间
-	claims["iat"] = time.Now().Unix()
-	token.Claims = claims
+	claims.IssuedAt = time.Now().Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	//加密生成token
 	tokenString, err = token.SignedString([]byte(SecretKey))
 	rep = BuildResponse(err)

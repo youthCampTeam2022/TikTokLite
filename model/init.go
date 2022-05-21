@@ -7,7 +7,10 @@ import (
 	"log"
 )
 
-var DB *gorm.DB
+var (
+	DB         *gorm.DB
+	RedisCache *Cache
+)
 
 //注意不要明文放github上
 const (
@@ -23,6 +26,7 @@ func MysqlInit() {
 		return
 	}
 	DB = db
+	//fmt.Println(DB)
 	_ = DB.AutoMigrate(&Video{})
 	_ = DB.AutoMigrate(&User{})
 	_ = DB.AutoMigrate(&Follow{})
@@ -30,7 +34,10 @@ func MysqlInit() {
 	_ = DB.AutoMigrate(&Favorite{})
 
 }
-
 func RedisInit() {
-
+	RedisCache = NewRedisCache(0, "127.0.0.1:6379", FOREVER)
+}
+func Init() {
+	MysqlInit()
+	RedisInit()
 }

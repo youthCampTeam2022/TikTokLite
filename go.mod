@@ -6,6 +6,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.7.7
+	github.com/gomodule/redigo v1.8.8
 	github.com/stretchr/testify v1.7.0
 	gorm.io/driver/mysql v1.3.3
 	gorm.io/gorm v1.23.5
