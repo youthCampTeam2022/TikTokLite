@@ -23,10 +23,13 @@ func RouterInit(r *gin.Engine) {
 	apiRouter.GET("/publish/list/", controller.PublishList)
 
 	// extra apis - I
-	apiRouter.POST("/favorite/action/", controller.FavoriteAction)
-	apiRouter.GET("/favorite/list/", controller.FavoriteList)
-	apiRouter.POST("/comment/action/", controller.CommentAction)
-	apiRouter.GET("/comment/list/", controller.CommentList)
+	favoriteGroup := apiRouter.Group("/favorite",middleware.ValidDataTokenMiddleWare)
+	favoriteGroup.POST("/action/", controller.FavoriteAction)
+	favoriteGroup.GET("/list/", controller.FavoriteList)
+
+	commentGroup := apiRouter.Group("/comment",middleware.ValidDataTokenMiddleWare)
+	commentGroup.POST("/action/", controller.CommentAction)
+	commentGroup.GET("/list/", controller.CommentList)
 
 	// extra apis - II
 	rc := controller.NewRelationController()

@@ -29,7 +29,8 @@ type UserRes struct {
 	IsFollow      bool   `json:"is_follow,omitempty"`
 }
 
-func GetCommentRes(videoID int64)(comments []CommentRes,err error)  {
+func GetCommentRes(videoID int64,userID int64)(comments []CommentRes,err error)  {
+	f :=  FollowManagerRepository{DB,RedisCache}
 	rows,err := DB.Raw("SELECT comments.id,comments.content,comments.created_at,users.id,users.name " +
 		"FROM comments INNER JOIN users ON comments.user_id = users.id " +
 		"WHERE comments.deleted_at is null and video_id = ?",videoID).Rows()
@@ -44,10 +45,9 @@ func GetCommentRes(videoID int64)(comments []CommentRes,err error)  {
 			return nil, err
 		}
 		comment.CreateDate = util.Time2String(createDate)
-		//todo: 缺接口
-		comment.User.FollowerCount = 0
-		comment.User.FollowCount = 0
-		comment.User.IsFollow = false
+		comment.User.FollowerCount = f.RedisFollowCount(comment.User.Id)
+		comment.User.FollowCount = f.RedisFollowerCount(comment.User.Id)
+		comment.User.IsFollow = f.RedisIsFollow(userID,comment.User.Id)
 		comments = append(comments,comment)
 	}
 	return comments, err

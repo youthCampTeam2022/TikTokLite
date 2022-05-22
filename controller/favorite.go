@@ -14,12 +14,11 @@ type FavoriteListResponse struct {
 }
 
 func FavoriteAction(c *gin.Context) {
-	userIDQuery, _ := c.GetQuery("user_id")
 	videoIDQuery, _ := c.GetQuery("video_id")
 	actionTypeQuery, _ := c.GetQuery("action_type")
-
+	userIDToken, _ := c.Get("user_id")
+	userID := userIDToken.(int64)
 	videoID, _ := strconv.Atoi(videoIDQuery)
-	userID, _ := strconv.Atoi(userIDQuery)
 	actionType, _ := strconv.Atoi(actionTypeQuery)
 
 	if actionType == 1 {
@@ -58,10 +57,9 @@ func FavoriteAction(c *gin.Context) {
 }
 
 func FavoriteList(c *gin.Context) {
-	//token和user
-	userIDQuery, _ := c.GetQuery("user_id")
-	userID, _ := strconv.Atoi(userIDQuery)
-	list, err := service.GetFavoriteList(int64(userID))
+	userIDToken, _ := c.Get("user_id")
+	userID := userIDToken.(int64)
+	list, err := service.GetFavoriteList(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, FavoriteListResponse{
 			Response: service.Response{

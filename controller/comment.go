@@ -14,17 +14,16 @@ type CommentListResponse struct {
 }
 
 func CommentAction(c *gin.Context) {
-	//token := c.Query("token")
-	userIDQuery,_ := c.GetQuery("user_id")
 	videoIDQuery, _ := c.GetQuery("video_id")
 	actionTypeQuery,_ := c.GetQuery("action_type")
 	commentTextQuery,_ := c.GetQuery("comment_text")
 	commentIDQuery,_ := c.GetQuery("comment_id")
+	userIDToken, _ := c.Get("user_id")
 
 	videoID, _ := strconv.Atoi(videoIDQuery)
-	userID,_ := strconv.Atoi(userIDQuery)
 	commentID, _ := strconv.Atoi(commentIDQuery)
 	actionType,_ := strconv.Atoi(actionTypeQuery)
+	userID := userIDToken.(int64)
 
 	if actionType==1 {
 		comment,ok := service.CommentFilter(commentTextQuery)
@@ -44,7 +43,7 @@ func CommentAction(c *gin.Context) {
 			return
 		}
 	}else if actionType == 2{
-		err := service.DeleteComment(int64(userID), int64(commentID))
+		err := service.DeleteComment(userID, int64(commentID))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError,service.Response{
 				StatusCode: 6,
@@ -66,14 +65,11 @@ func CommentAction(c *gin.Context) {
 }
 
 func CommentList(c *gin.Context) {
-	//token := c.Query("token")
-	//userIDQuery,_ := c.GetQuery("user_id")
 	videoIDQuery,_  := c.GetQuery("video_id")
-	//过验证
 	videoID, _ := strconv.Atoi(videoIDQuery)
-	//userID, _ := strconv.Atoi(userIDQuery)
-	//comments,err := service.GetComment(int64(videoID))
-	comments,err := service.GetCommentByJoin(int64(videoID))
+	userIDToken, _ := c.Get("user_id")
+	userID := userIDToken.(int64)
+	comments,err := service.GetCommentByJoin(int64(videoID),userID)
 	if err != nil{
 		c.JSON(http.StatusInternalServerError,CommentListResponse{
 			Response:    service.Response{StatusCode: 1, StatusMsg: "err in get comment"},
