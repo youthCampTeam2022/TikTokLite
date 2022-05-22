@@ -124,16 +124,17 @@ func (s *UserService) UserRegister(req *UserLoginOrRegisterRequest) (resp *UserL
 	return
 }
 
-//UserInfo 获取用户基本信息，现在暂时只返回username和userid，其他字段暂时先设置默认值
+//UserInfo 获取用户基本信息
 func (s *UserService) UserInfo(req *UserInfoRequest) (resp *UserInfoResponse, err error) {
-	var u model.User
+	//var u model.User
 	resp = new(UserInfoResponse)
-	resp.Response, err = s.getUserById(&u, uint(req.UserId))
-	/*关注粉丝表还未创建，所以其他字段暂时默认值*/
-	resp.FollowCount = 0
-	resp.FollowerCount = 0
-	resp.Id = int64(u.ID)
-	resp.IsFollow = false
-	resp.Name = u.Name
+	//resp.Response, err = s.getUserById(&u, uint(req.UserId))
+	resp.Response = BuildResponse(nil)
+	resp.User = BuildUser(req.UserId, req.UserId, model.NewFollowManagerRepository())
+	//resp.FollowCount = 0
+	//resp.FollowerCount = 0
+	//resp.Id = int64(u.ID)
+	//resp.IsFollow = false
+	//resp.Name = u.Name
 	return
 }
