@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"TikTokLite/model"
 	"TikTokLite/service"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,7 @@ import (
 
 type FavoriteListResponse struct {
 	service.Response
-	videoList []service.Video
+	videoList []model.VideoRes
 }
 
 func FavoriteAction(c *gin.Context) {
@@ -24,7 +25,7 @@ func FavoriteAction(c *gin.Context) {
 	if actionType == 1 {
 		//点赞
 		fmt.Println(videoID, userID)
-		err := service.SetFavorite(int64(videoID), int64(userID))
+		err := service.SetFavorite(int64(videoID), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 1,
@@ -35,7 +36,7 @@ func FavoriteAction(c *gin.Context) {
 
 	} else if actionType == 2 {
 		//取消点赞
-		err := service.CancelFavorite(int64(videoID), int64(userID))
+		err := service.CancelFavorite(int64(videoID), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 2,
