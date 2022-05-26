@@ -19,15 +19,17 @@ func RouterInit(r *gin.Engine) {
 	//apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/register/", uc.Register)
 	apiRouter.POST("/user/login/", uc.Login)
-	apiRouter.POST("/publish/action/", controller.Publish)
-	apiRouter.GET("/publish/list/", controller.PublishList)
+
+	publishGroup := apiRouter.Group("/publish", middleware.ValidDataTokenMiddleWare)
+	publishGroup.POST("/action/", controller.Publish)
+	publishGroup.GET("/list/", controller.PublishList)
 
 	// extra apis - I
-	favoriteGroup := apiRouter.Group("/favorite",middleware.ValidDataTokenMiddleWare)
+	favoriteGroup := apiRouter.Group("/favorite", middleware.ValidDataTokenMiddleWare)
 	favoriteGroup.POST("/action/", controller.FavoriteAction)
 	favoriteGroup.GET("/list/", controller.FavoriteList)
 
-	commentGroup := apiRouter.Group("/comment",middleware.ValidDataTokenMiddleWare)
+	commentGroup := apiRouter.Group("/comment", middleware.ValidDataTokenMiddleWare)
 	commentGroup.POST("/action/", controller.CommentAction)
 	commentGroup.GET("/list/", controller.CommentList)
 
