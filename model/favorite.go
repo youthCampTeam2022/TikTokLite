@@ -36,7 +36,8 @@ func (f *Favorite) UniqueInsert() error {
 }
 
 func (f *Favorite) Delete() error {
-	return DB.Delete(&f).Error
+	return DB.Where("user_id=? AND video_id=?", f.UserID, f.VideoID).
+		Delete(&Favorite{}).Error
 }
 
 func GetFavoriteNum(videoID int64) (count int64) {
@@ -47,6 +48,7 @@ func GetFavoriteNum(videoID int64) (count int64) {
 func (f *Favorite) GetFavoriteList() ([]int64, error) {
 	var res []int64
 	err := DB.Model(f).Select("video_id").Where("user_id = ?", f.UserID).Scan(&res).Error
+	//log.Println(res)
 	return res, err
 }
 
@@ -82,6 +84,7 @@ func GetFavoriteRes(userID int64) (videos []VideoRes, err error) {
 		videoRes.FavoriteCount = GetFavoriteNum(videoRes.Id)
 		videoRes.CommentCount = GetCommentNum(videoRes.Id)
 		videoRes.Author = UserRes{
+			Id:            videoRes.Author.Id,
 			Name:          f.GetName(videoRes.Author.Id),
 			FollowCount:   f.RedisFollowCount(videoRes.Author.Id),
 			FollowerCount: f.RedisFollowerCount(videoRes.Author.Id),

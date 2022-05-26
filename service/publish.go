@@ -21,8 +21,8 @@ const (
 	playUrlPrefix  = "http://rc2j71u7u.hn-bkt.clouddn.com/videos/"
 	coverUrlPrefix = "http://rc2j71u7u.hn-bkt.clouddn.com/covers/"
 	//本地暂存文件夹路径
-	videoPathPrefix = "./public/videos/"
-	coverPathPrefix = "./public/covers/"
+	videoPathPrefix = "D:\\awesomeProject\\TikTokLite\\TikTokLite\\service\\public\\videos\\"
+	coverPathPrefix = "D:\\awesomeProject\\TikTokLite\\TikTokLite\\service\\public\\covers\\"
 	//apiKey
 	accessKey = "_ZFgV0-F11X84PzjKG4NzJvZKCw6DtupRPbLizAa"
 	secretKey = "T857jrpAW1BT5QZlW7GuDzNthC2NRgTe5NEthvW8"
@@ -38,7 +38,6 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 		return "", "", err
 	}
 	defer videoData.Close()
-
 	//先把视频保存本地，再制作封面，再一起上传到七牛云，完成后删除本地视频和封面
 	videoName := fmt.Sprintf("%d_%s", userId, filename)
 	videoPath := videoPathPrefix + videoName
@@ -58,6 +57,7 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 		return "", "", err
 	}
 	coverPath := coverPathPrefix + coverName
+	//log.Println(videoPath, coverPath)
 	cmd := exec.Command("ffmpeg", "-i", videoPath, "-y", "-f", "mjpeg", "-ss", "0.1", "-t", "0.001", coverPath)
 	if err := cmd.Run(); err != nil {
 		log.Println("执行ffmpeg失败：", err)

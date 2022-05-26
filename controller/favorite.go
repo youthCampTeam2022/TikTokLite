@@ -11,7 +11,7 @@ import (
 
 type FavoriteListResponse struct {
 	service.Response
-	videoList []model.VideoRes
+	VideoList []model.VideoRes
 }
 
 func FavoriteAction(c *gin.Context) {
@@ -67,7 +67,7 @@ func FavoriteList(c *gin.Context) {
 				StatusCode: 2,
 				StatusMsg:  "err in GetFavoriteList",
 			},
-			videoList: nil,
+			VideoList: nil,
 		})
 		return
 	}
@@ -76,6 +76,6 @@ func FavoriteList(c *gin.Context) {
 			StatusCode: 0,
 			StatusMsg:  "ok",
 		},
-		videoList: list,
+		VideoList: list,
 	})
 }
