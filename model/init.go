@@ -14,8 +14,8 @@ var (
 
 //注意不要明文放github上
 const (
-	user     = "root"
-	password = "haogee"
+	user     = ""
+	password = ""
 )
 
 func MysqlInit() {

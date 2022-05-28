@@ -7,8 +7,8 @@ import (
 
 type Favorite struct {
 	gorm.Model
-	VideoID int64 `gorm:"index"`
-	UserID  int64
+	VideoID int64
+	UserID  int64 `gorm:"index"`
 }
 
 type VideoRes struct {
@@ -36,7 +36,7 @@ func (f *Favorite) UniqueInsert() error {
 }
 
 func (f *Favorite) Delete() error {
-	return DB.Where("user_id=? AND video_id=?", f.UserID, f.VideoID).
+	return DB.Where("user_id=? AND video_id=?", f.UserID, f.VideoID).Unscoped().
 		Delete(&Favorite{}).Error
 }
 
