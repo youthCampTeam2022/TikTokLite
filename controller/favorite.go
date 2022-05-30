@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"TikTokLite/model"
 	"TikTokLite/service"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -10,9 +10,10 @@ import (
 
 type FavoriteListResponse struct {
 	service.Response
-	videoList []service.Video
+	VideoList []model.VideoRes `json:"video_list"`
 }
 
+// FavoriteAction 点赞操作
 func FavoriteAction(c *gin.Context) {
 	videoIDQuery, _ := c.GetQuery("video_id")
 	actionTypeQuery, _ := c.GetQuery("action_type")
@@ -23,8 +24,7 @@ func FavoriteAction(c *gin.Context) {
 
 	if actionType == 1 {
 		//点赞
-		fmt.Println(videoID, userID)
-		err := service.SetFavorite(int64(videoID), int64(userID))
+		err := service.SetFavorite(int64(videoID), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 1,
@@ -35,7 +35,7 @@ func FavoriteAction(c *gin.Context) {
 
 	} else if actionType == 2 {
 		//取消点赞
-		err := service.CancelFavorite(int64(videoID), int64(userID))
+		err := service.CancelFavorite(int64(videoID), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 2,
@@ -56,6 +56,7 @@ func FavoriteAction(c *gin.Context) {
 	})
 }
 
+// FavoriteList 获取点赞列表
 func FavoriteList(c *gin.Context) {
 	userIDToken, _ := c.Get("user_id")
 	userID := userIDToken.(int64)
@@ -66,7 +67,7 @@ func FavoriteList(c *gin.Context) {
 				StatusCode: 2,
 				StatusMsg:  "err in GetFavoriteList",
 			},
-			videoList: nil,
+			VideoList: nil,
 		})
 		return
 	}
@@ -75,6 +76,6 @@ func FavoriteList(c *gin.Context) {
 			StatusCode: 0,
 			StatusMsg:  "ok",
 		},
-		videoList: list,
+		VideoList: list,
 	})
 }

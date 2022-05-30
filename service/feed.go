@@ -34,8 +34,8 @@ func GetFeed(latestTime time.Time, userId int64) ([]Video, int64, error) {
 		videoList[i].Title = videos[i].Title
 		videoList[i].PlayUrl = videos[i].PlayUrl
 		videoList[i].CoverUrl = videos[i].CoverUrl
-		videoList[i].FavoriteCount = model.GetFavoriteNum(videoId)
-		videoList[i].CommentCount = model.GetCommentNum(videoId)
+		videoList[i].FavoriteCount = model.GetFavoriteNumRedis(videoId)
+		videoList[i].CommentCount = model.GetCommentNumRedis(videoId)
 		videoList[i].IsFavorite = isFavorite
 	}
 	return videoList, videos[0].CreatedAt.UnixMilli(), nil
