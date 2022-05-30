@@ -4,6 +4,7 @@ import (
 	"TikTokLite/model"
 	"TikTokLite/router"
 	"TikTokLite/setting"
+	"TikTokLite/util"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -13,9 +14,9 @@ func main() {
 		fmt.Printf("init setting failed, err: %v \n", err)
 		return
 	}
-	fmt.Printf("\n%v\n", setting.Conf)
 	model.Init()
 	r := gin.Default()
 	router.RouterInit(r)
+	util.FilterInit()
 	r.Run(fmt.Sprintf(":%d", setting.Conf.Port))
 }
