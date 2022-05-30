@@ -32,24 +32,20 @@ func (f *Favorite) UniqueInsert() error {
 	if FirstRes.ID != 0 {
 		return errors.New("repeat favorite")
 	}
+	IncrFavoriteRedis(f.VideoID)
 	return f.Create()
 }
 
 func (f *Favorite) Delete() error {
+	DecrFavoriteRedis(f.VideoID)
 	return DB.Where("user_id=? AND video_id=?", f.UserID, f.VideoID).Unscoped().
 		Delete(&Favorite{}).Error
 }
 
+// GetFavoriteNum count获取点赞数
 func GetFavoriteNum(videoID int64) (count int64) {
 	DB.Model(&Favorite{}).Where("video_id = ?", videoID).Count(&count)
 	return
-}
-
-func (f *Favorite) GetFavoriteList() ([]int64, error) {
-	var res []int64
-	err := DB.Model(f).Select("video_id").Where("user_id = ?", f.UserID).Scan(&res).Error
-	//log.Println(res)
-	return res, err
 }
 
 func IsFavorite(userId, videoId int64) (bool, error) {
@@ -63,10 +59,6 @@ func IsFavorite(userId, videoId int64) (bool, error) {
 
 func GetFavoriteRes(userID int64) (videos []VideoRes, err error) {
 	f := FollowManagerRepository{DB, RedisCache}
-	//rows,err := DB.Raw("select favorites.video_id,videos.author_id,videos.play_url,videos.cover_url,videos.title,users.id,users.name" +
-	//	"FROM (favorites INNER JOIN videos On favorites.video_id = videos.id) " +
-	//	"INNER JOIN users On users.id = videos.author_id" +
-	//	"WHERE favorites.deleted_at is null and favorites.user_id = ?",userID).Rows()
 	rows, err := DB.Raw("select favorites.video_id,videos.author_id,videos.play_url,videos.cover_url,videos.title "+
 		"FROM favorites INNER JOIN videos On favorites.video_id = videos.id "+
 		"WHERE favorites.deleted_at is null and favorites.user_id = ?", userID).Rows()
@@ -81,8 +73,8 @@ func GetFavoriteRes(userID int64) (videos []VideoRes, err error) {
 			return nil, err
 		}
 		videoRes.IsFavorite = true
-		videoRes.FavoriteCount = GetFavoriteNum(videoRes.Id)
-		videoRes.CommentCount = GetCommentNum(videoRes.Id)
+		videoRes.FavoriteCount = GetFavoriteNumRedis(videoRes.Id)
+		videoRes.CommentCount = GetCommentNumRedis(videoRes.Id)
 		videoRes.Author = UserRes{
 			Id:            videoRes.Author.Id,
 			Name:          f.GetName(videoRes.Author.Id),

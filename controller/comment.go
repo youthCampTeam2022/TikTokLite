@@ -13,6 +13,7 @@ type CommentListResponse struct {
 	CommentList []model.CommentRes `json:"comment_list,omitempty"`
 }
 
+// CommentAction 评论操作-评论/删除评论
 func CommentAction(c *gin.Context) {
 	videoIDQuery, _ := c.GetQuery("video_id")
 	actionTypeQuery, _ := c.GetQuery("action_type")
@@ -64,6 +65,7 @@ func CommentAction(c *gin.Context) {
 	})
 }
 
+// CommentList 获取评论列表
 func CommentList(c *gin.Context) {
 	videoIDQuery, _ := c.GetQuery("video_id")
 	videoID, _ := strconv.Atoi(videoIDQuery)

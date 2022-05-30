@@ -57,7 +57,7 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 		return "", "", err
 	}
 	coverPath := coverPathPrefix + coverName
-	log.Println(videoPath, coverPath)
+	//log.Println(videoPath, coverPath)
 	cmd := exec.Command("ffmpeg", "-i", videoPath, "-y", "-f", "mjpeg", "-ss", "0.1", "-t", "0.001", coverPath)
 	if err := cmd.Run(); err != nil {
 		log.Println("执行ffmpeg失败：", err)
@@ -169,8 +169,8 @@ func GetVideoList(userId, toUserId int64) ([]Video, error) {
 		videoList[i].Title = videos[i].Title
 		videoList[i].PlayUrl = videos[i].PlayUrl
 		videoList[i].CoverUrl = videos[i].CoverUrl
-		videoList[i].FavoriteCount = model.GetFavoriteNum(videoId)
-		videoList[i].CommentCount = model.GetCommentNum(videoId)
+		videoList[i].FavoriteCount = model.GetFavoriteNumRedis(videoId)
+		videoList[i].CommentCount = model.GetCommentNumRedis(videoId)
 		videoList[i].IsFavorite = isFavorite
 	}
 	return videoList, nil
