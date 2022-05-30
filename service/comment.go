@@ -2,6 +2,7 @@ package service
 
 import (
 	"TikTokLite/model"
+	"TikTokLite/util"
 	"gorm.io/gorm"
 )
 
@@ -19,10 +20,6 @@ func CreateComment(videoID, userID int64, text string) error {
 	return c.Create()
 }
 
-func CommentFilter(commentMsg string) (string, bool) {
-	return commentMsg, true
-}
-
 func DeleteComment(userID, commentID int64) error {
 	c := model.Comment{
 		Model: gorm.Model{
@@ -31,4 +28,9 @@ func DeleteComment(userID, commentID int64) error {
 		UserID: userID,
 	}
 	return c.DeleteByUser()
+}
+
+// CommentFilter 评论过滤器，过滤敏感词
+func CommentFilter(commentMsg string) (string, bool) {
+	return util.Filtration(commentMsg)
 }

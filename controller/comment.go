@@ -27,15 +27,16 @@ func CommentAction(c *gin.Context) {
 	userID := userIDToken.(int64)
 
 	if actionType == 1 {
-		comment, ok := service.CommentFilter(commentTextQuery)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, service.Response{
-				StatusCode: 4,
-				StatusMsg:  "too many sensitive words",
-			})
-			return
-		}
-		err := service.CreateComment(int64(videoID), int64(userID), comment)
+		//评论过滤器，检测敏感词
+		comment, _ := service.CommentFilter(commentTextQuery)
+		//if !ok {
+		//	c.JSON(http.StatusInternalServerError, service.Response{
+		//		StatusCode: 4,
+		//		StatusMsg:  "too many sensitive words",
+		//	})
+		//	return
+		//}
+		err := service.CreateComment(int64(videoID), userID, comment)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 5,
