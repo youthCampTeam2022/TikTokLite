@@ -10,7 +10,7 @@ import (
 
 type FavoriteListResponse struct {
 	service.Response
-	VideoList []model.VideoRes
+	VideoList []model.VideoRes `json:"video_list"`
 }
 
 // FavoriteAction 点赞操作
