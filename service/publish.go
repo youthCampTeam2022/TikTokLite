@@ -2,6 +2,7 @@ package service
 
 import (
 	"TikTokLite/model"
+	"TikTokLite/setting"
 	"TikTokLite/util"
 	"context"
 	"errors"
@@ -16,20 +17,6 @@ import (
 	"path/filepath"
 )
 
-const (
-	//外径前缀
-	playUrlPrefix  = "http://rc2j71u7u.hn-bkt.clouddn.com/videos/"
-	coverUrlPrefix = "http://rc2j71u7u.hn-bkt.clouddn.com/covers/"
-	//本地暂存文件夹路径
-	videoPathPrefix = "./public/videos/"
-	coverPathPrefix = "./public/covers/"
-	//apiKey
-	accessKey = "_ZFgV0-F11X84PzjKG4NzJvZKCw6DtupRPbLizAa"
-	secretKey = "T857jrpAW1BT5QZlW7GuDzNthC2NRgTe5NEthvW8"
-	//七牛云空间名称
-	bucket = "tiktoklite-feed"
-)
-
 func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (string, string, error) {
 	filename := filepath.Base(data.Filename)
 	videoData, err := data.Open()
@@ -38,15 +25,12 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 		return "", "", err
 	}
 	defer videoData.Close()
-
+	//获取uuid，拼接视频名称，方便调试就先加上user_id和视频名称
+	uuid := util.GetUUID()
 	//先把视频保存本地，再制作封面，再一起上传到七牛云，完成后删除本地视频和封面
-	videoName := fmt.Sprintf("%d_%s", userId, filename)
-	videoPath := videoPathPrefix + videoName
-	if err != nil {
-		log.Println("获取video绝对路径失败：", err)
-		return "", "", err
-	}
-	//先保存本地然后取出第一帧之后在一起上传至七牛云
+	videoName := fmt.Sprintf("%s_%d_%s", uuid, userId, filename)
+	videoPath := setting.Conf.VideoPathPrefix + videoName
+	//先保存本地然后取出第一帧之,(后可选一起上传至七牛云)
 	if err := c.SaveUploadedFile(data, videoPath); err != nil {
 		log.Println("本地存储video失败", err)
 		return "", "", err
@@ -54,51 +38,55 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 	//截取第一帧做封面
 	coverName, err := getCoverName(videoName)
 	if err != nil {
-		log.Println("获去coverName失败：", err)
+		log.Println("获取coverName失败：", err)
 		return "", "", err
 	}
-	coverPath := coverPathPrefix + coverName
+	coverPath := setting.Conf.CoverPathPrefix + coverName
 	cmd := exec.Command("ffmpeg", "-i", videoPath, "-y", "-f", "mjpeg", "-ss", "0.1", "-t", "0.001", coverPath)
 	if err := cmd.Run(); err != nil {
 		log.Println("执行ffmpeg失败：", err)
 		return "", "", err
 	}
-	cover, err := os.Open(coverPath)
-	if err != nil {
-		log.Println("创建cover失败：", err)
-		return "", "", err
+	var playUrl, coverUrl string
+	//上传至七牛云
+	if setting.Conf.PublishConfig.Mode {
+		cover, err := os.Open(coverPath)
+		if err != nil {
+			log.Println("创建cover失败：", err)
+			return "", "", err
+		}
+		defer os.Remove(videoPath)
+		//因为先进后出，所以得先关闭链接之后再删除
+		defer os.Remove(coverPath)
+		defer cover.Close()
+		//最后上传至七牛云
+		co, err := cover.Stat()
+		if err != nil {
+			log.Println("打开cover.Stat失败：", err)
+			return "", "", err
+		}
+		err = uploadVideoToQiNiuCloud(videoData, cover, videoName, coverName, data.Size, co.Size())
+		if err != nil {
+			log.Println("七牛云上传失败：", err)
+			return "", "", err
+		}
+		playUrl = setting.Conf.QiNiuCloudPlayUrlPrefix + videoName
+		coverUrl = setting.Conf.QiNiuCloudCoverUrlPrefix + coverName
+		return playUrl, coverUrl, nil
 	}
-	defer os.Remove(videoPath)
-	//因为先进后出，所以得先关闭链接之后再删除
-	defer os.Remove(coverPath)
-	defer cover.Close()
-	//最后上传至七牛云
-	co, err := cover.Stat()
-	if err != nil {
-		log.Println("打开cover.Stat失败：", err)
-		return "", "", err
-	}
-	uuid := util.GetUUID()
-	netVideoName := uuid + "_" + videoName
-	netCoverName := uuid + "_" + coverName
-	err = uploadVideo(videoData, cover, netVideoName, netCoverName, data.Size, co.Size())
-	if err != nil {
-		log.Println("七牛云上传失败：", err)
-		return "", "", err
-	}
-	playUrl := playUrlPrefix + netVideoName
-	coverUrl := coverUrlPrefix + netCoverName
+	playUrl = fmt.Sprintf("http://%s:%d/static/videos/%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
+	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
 	return playUrl, coverUrl, nil
 }
 
-func uploadVideo(video, cover multipart.File, videoName, coverName string, videoSize, coverSize int64) error {
+func uploadVideoToQiNiuCloud(video, cover multipart.File, videoName, coverName string, videoSize, coverSize int64) error {
 	//上传的路径+文件名
 	videoKey := fmt.Sprintf("videos/%s", videoName)
 	coverKey := fmt.Sprintf("covers/%s", coverName)
 	//上传凭证
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := qbox.NewMac(setting.Conf.AccessKey, setting.Conf.SecretKey)
 	putPolicy := storage.PutPolicy{
-		Scope: bucket,
+		Scope: setting.Conf.BucketName,
 	}
 	upToken := putPolicy.UploadToken(mac)
 
