@@ -9,7 +9,7 @@ import (
 type User struct {
 	gorm.Model
 	Name     string `gorm:"type:char(10);"`
-	Password string `gorm:"type:char(20);"`
+	Password string `gorm:"type:char(32);"`
 }
 
 //IUserRepository 对用户表操作接口

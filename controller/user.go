@@ -2,6 +2,9 @@ package controller
 
 import (
 	"TikTokLite/service"
+	"crypto/md5"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -41,7 +44,13 @@ func sendErrResponse(c *gin.Context, resp service.Response) {
 func (uc *UserController) Register(c *gin.Context) {
 	var req service.UserLoginOrRegisterRequest
 	req.Name, _ = c.GetQuery("username")
-	req.Password, _ = c.GetQuery("password")
+	password, _ := c.GetQuery("password")
+	if len(password) > 20 {
+		resp := service.BuildResponse(errors.New("password is too long,limit <= 20"))
+		sendErrResponse(c, resp)
+	}
+	has := md5.Sum([]byte(password))
+	req.Password = fmt.Sprintf("%X", has)
 	//fmt.Println(req) ///
 	resp, err := uc.service.UserRegister(&req)
 	if err != nil {
@@ -60,7 +69,9 @@ func (uc *UserController) Register(c *gin.Context) {
 func (uc *UserController) Login(c *gin.Context) {
 	var req service.UserLoginOrRegisterRequest
 	req.Name, _ = c.GetQuery("username")
-	req.Password, _ = c.GetQuery("password")
+	password, _ := c.GetQuery("password")
+	has := md5.Sum([]byte(password))
+	req.Password = fmt.Sprintf("%X", has)
 	resp, err := uc.service.UserLogin(&req)
 	if err != nil {
 		sendErrResponse(c, resp.Response)
