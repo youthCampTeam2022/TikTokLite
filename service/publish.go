@@ -71,11 +71,11 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 			return "", "", err
 		}
 		playUrl = setting.Conf.QiNiuCloudPlayUrlPrefix + videoName
-		coverUrl = setting.Conf.QiNiuCloudCoverUrlPrefix + coverName
+		coverUrl = setting.Conf.QiNiuCloudCoverUrlPrefix +  coverName
 		return playUrl, coverUrl, nil
 	}
-	playUrl = fmt.Sprintf("http://%s:%d/static/videos/%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
-	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
+	playUrl = fmt.Sprintf("http://%s:%d/static/videos/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
+	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
 	return playUrl, coverUrl, nil
 }
 
