@@ -57,6 +57,8 @@ func (uc *UserController) Register(c *gin.Context) {
 		sendErrResponse(c, resp.Response)
 		return
 	}
+	//初始化feed流
+	service.UserFeedInit(resp.UserId)
 	c.JSON(http.StatusOK, gin.H{
 		"status_code": resp.StatusCode,
 		"status_msg":  resp.StatusMsg,
@@ -77,6 +79,8 @@ func (uc *UserController) Login(c *gin.Context) {
 		sendErrResponse(c, resp.Response)
 		return
 	}
+	//初始化feed流
+	service.UserFeedInit(resp.UserId)
 	c.JSON(http.StatusOK, gin.H{
 		"status_code": resp.StatusCode,
 		"status_msg":  resp.StatusMsg,

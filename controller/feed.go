@@ -32,7 +32,8 @@ func Feed(c *gin.Context) {
 	if exist {
 		latestTime, _ = strconv.ParseInt(strLatestTime, 10, 64)
 	}
-	videoList, nextTime, err := service.GetFeed(time.UnixMilli(latestTime), userId)
+	//videoList, nextTime, err := service.GetFeed(time.UnixMilli(latestTime), userId)
+	videoList, nextTime, err := service.GetUserFeed(time.UnixMilli(latestTime), userId)
 	if err != nil {
 		resp.StatusCode = 1
 		resp.StatusMsg = err.Error()
