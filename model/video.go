@@ -44,3 +44,9 @@ func GetLatestVideo() (Video, error) {
 	query := DB.Last(&video)
 	return video, query.Error
 }
+
+func GetVideoCreateTime(videoID int64)int64  {
+	var t time.Time
+	DB.Model(&Video{}).Where("id = ?",videoID).Select("created_at").Scan(&t)
+	return t.Unix()
+}
