@@ -1,6 +1,6 @@
 name: "tiktok"
 mode: "debug"
-port: 8080
+port: 8081
 version: "v0.0.2"
 start_time: "2022-05-10"
 machine_id: 1
@@ -12,10 +12,10 @@ publish:
     qi_niu_cloud_play_url_prefix: "http://rc2j71u7u.hn-bkt.clouddn.com/videos/"
     qi_niu_cloud_cover_url_prefix: "http://rc2j71u7u.hn-bkt.clouddn.com/covers/"
     #Enter the external IP address of the local host
-    local_ip_address: "0.0.0.0"
+    local_ip_address: ""
     #local storage path prefix
-    video_path_prefix: "./public/videos/"
-    cover_path_prefix: "./public/covers/"
+    video_path_prefix: "./static/videos/"
+    cover_path_prefix: "./static/covers/"
     #qiniucloud api key
     access_key: "_ZFgV0-F11X84PzjKG4NzJvZKCw6DtupRPbLizAa"
     secret_key: "T857jrpAW1BT5QZlW7GuDzNthC2NRgTe5NEthvW8"

@@ -8,7 +8,9 @@ import (
 
 func RouterInit(r *gin.Engine) {
 	//public directory is used to serve static resources
-	r.Static("/static", "./public")
+	//r.Static("/static", "./public")
+	r.GET("/static/videos",controller.Videos)
+	r.GET("/static/covers",controller.Covers)
 
 	apiRouter := r.Group("/douyin")
 	//实现了用户注册，登录，信息的接口
