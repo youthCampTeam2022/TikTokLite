@@ -60,11 +60,12 @@ func GetLatestVideo() (Video, error) {
 	return video, query.Error
 }
 
-func GetVideoCreateTime(videoID int64)int64  {
+func GetVideoCreateTime(videoID int64) int64 {
 	var t time.Time
-	DB.Model(&Video{}).Where("id = ?",videoID).Select("created_at").Scan(&t)
+	DB.Model(&Video{}).Where("id = ?", videoID).Select("created_at").Scan(&t)
 	return t.Unix()
 }
+
 // Authorfeed增加新的视频
 func insertAuthorFeed(userID, videoID, now int64) (err error) {
 	authorFeedKey := fmt.Sprintf("%s:%s", strconv.FormatInt(userID, 10), "authorfeed")
@@ -86,8 +87,9 @@ func pushNewVideoToActiveUsersFeed(userID, videoID, now int64) (err error) {
 	defer conn.Close()
 	for i := 0; i < len(followers); i++ {
 		ids = strconv.FormatInt(followers[i], 10)
-		loginTimeKey = fmt.Sprintf("%s:%s", ids, "loginTime")
-		loginTime, err = redis.Int64(conn.Do("GET", loginTimeKey))
+		loginTimeKey = fmt.Sprintf("%s", ids)
+		//loginTime, err = redis.Int64(conn.Do("GET", loginTimeKey))
+		loginTime, err = redis.Int64(conn.Do("HGET", "aliveUser", loginTimeKey))
 		if err != nil {
 			if err == redis.ErrNil {
 				continue
@@ -101,8 +103,12 @@ func pushNewVideoToActiveUsersFeed(userID, videoID, now int64) (err error) {
 			if err != nil {
 				log.Println("userFeed Push failed:", err.Error())
 			}
+		} else {
+			_, _ = conn.Do("HDEL", "aliveUser", loginTimeKey)
 		}
 	}
+	userFeedKey = fmt.Sprintf("%s:%s", strconv.FormatInt(userID, 10), "userfeed")
+	_, _ = conn.Do("ZADD", userFeedKey, now, videoID)
 	return nil
 }
 func GetUserFeedRedis(latestTime time.Time, userId int64) ([]int64, error) {
