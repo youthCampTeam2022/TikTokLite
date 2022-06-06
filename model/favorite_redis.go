@@ -16,17 +16,13 @@ func GetFavoriteNumRedis(videoID int64) (count int64) {
 	}()
 	favoriteKey := ID2FavoriteKey(videoID)
 	//count
-	num, err := conn.Do("HGET", FavoriteHash, favoriteKey)
-	if err != nil || num == nil {
+	num, err := redis.Int64(conn.Do("HGET", FavoriteHash, favoriteKey))
+	if err != nil  {
 		count = GetFavoriteNum(videoID)
 		SetFavoriteNumRedis(videoID, count)
 		return
 	}
-	res, err := strconv.Atoi(string(num.([]uint8)))
-	if err != nil {
-		return 0
-	}
-	return int64(res)
+	return num
 }
 
 func ID2FavoriteKey(videoID int64) string {

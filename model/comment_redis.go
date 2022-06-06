@@ -16,13 +16,13 @@ func GetCommentNumRedis(videoID int64) (count int64) {
 	}()
 	commentKey := ID2CommentKey(videoID)
 	//count
-	num, err := conn.Do("HGET", CommentHash, commentKey)
+	num, err := redis.Int64(conn.Do("HGET", CommentHash, commentKey))
 	if err != nil {
 		count = GetCommentNum(videoID)
 		SetCommentNumRedis(videoID, count)
 		return
 	}
-	return num.(int64)
+	return num
 }
 
 func ID2CommentKey(videoID int64) string {
