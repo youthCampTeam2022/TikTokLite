@@ -1,6 +1,7 @@
 package model
 
 import (
+	"TikTokLite/setting"
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -12,14 +13,8 @@ var (
 	RedisCache *Cache
 )
 
-//注意不要明文放github上
-const (
-	user     = ""
-	password = ""
-)
-
 func MysqlInit() {
-	dsn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/tiktoklite?charset=utf8mb4&parseTime=True&loc=Local", user, password)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", setting.Conf.MysqlConfig.User, setting.Conf.MysqlConfig.Password, setting.Conf.MysqlConfig.Host, setting.Conf.MysqlConfig.DBName)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Println("err in MysqlInit:", err)
@@ -35,7 +30,7 @@ func MysqlInit() {
 
 }
 func RedisInit() {
-	RedisCache = NewRedisCache(0, "127.0.0.1:6379", FOREVER)
+	RedisCache = NewRedisCache(setting.Conf.DB, setting.Conf.RedisConfig.Host, FOREVER)
 }
 func Init() {
 	MysqlInit()

@@ -7,7 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-gonic/gin v1.7.7
-	github.com/gomodule/redigo v1.8.8
+	github.com/gistao/RedisGo-Async v0.0.0-20180809020228-149e8061d174
 	github.com/qiniu/go-sdk/v7 v7.12.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.12.0

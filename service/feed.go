@@ -19,7 +19,7 @@ func GetFeed(latestTime time.Time, userId int64) ([]Video, int64, error) {
 	var videos []model.Video
 	//如果当前时间后的投稿数为0就直接返回数据库中最新的N的视频
 	if latestVideo.CreatedAt.UnixMilli() <= latestTime.UnixMilli() {
-		fmt.Println("get the latest N")
+		//fmt.Println("get the latest N")
 		videos, err = model.GetTheLatestNVideos()
 	} else {
 		videos, err = model.GetVideosByLatestTime(latestTime)

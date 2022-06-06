@@ -5,6 +5,18 @@ version: "v0.0.2"
 start_time: "2022-05-10"
 machine_id: 1
 
+mysql:
+    host: "127.0.0.1:3308"
+    user: "root"
+    password: "root"
+    db_name: "tiktoklite"
+
+redis:
+    host: "127.0.0.1:6379"
+    password: ""
+    db: 0
+
+
 publish:
     #publish mode, true : qi niu cloud ; false : local storage (Enter the external IP address of the local host)
     mode: false
@@ -14,8 +26,8 @@ publish:
     #Enter the external IP address of the local host
     local_ip_address: ""
     #local storage path prefix
-    video_path_prefix: "./static/videos/"
-    cover_path_prefix: "./static/covers/"
+    video_path_prefix: "./public/videos/"
+    cover_path_prefix: "./public/covers/"
     #qiniucloud api key
     access_key: "_ZFgV0-F11X84PzjKG4NzJvZKCw6DtupRPbLizAa"
     secret_key: "T857jrpAW1BT5QZlW7GuDzNthC2NRgTe5NEthvW8"

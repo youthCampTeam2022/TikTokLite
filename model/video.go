@@ -27,6 +27,9 @@ func (v *Video) Create() error {
 
 	err := DB.Create(&v).Error
 	now := time.Now().UnixMilli()
+	//初始化redis中的点赞数和评论数
+	SetFavoriteNumRedis(int64(v.ID), 0)
+	SetCommentNumRedis(int64(v.ID), 0)
 	//更新authorfeed
 	_ = insertAuthorFeed(v.AuthorId, int64(v.ID), now)
 	//更新userfeed

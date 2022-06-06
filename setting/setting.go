@@ -19,6 +19,8 @@ type AppConfig struct {
 	MachineId int64  `mapstructure:"machine_id"`
 
 	*PublishConfig `mapstructure:"publish"`
+	*MysqlConfig   `mapstructure:"mysql"`
+	*RedisConfig   `mapstructure:"redis"`
 }
 
 type PublishConfig struct {
@@ -31,6 +33,19 @@ type PublishConfig struct {
 	AccessKey                string `mapstructure:"access_key"`
 	SecretKey                string `mapstructure:"secret_key"`
 	BucketName               string `mapstructure:"bucket_name"`
+}
+
+type MysqlConfig struct {
+	Host     string `mapstructure:"host"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"db_name"`
+}
+
+type RedisConfig struct {
+	Host     string `mapstructure:"host"`
+	DB       int    `mapstructure:"db"`
+	Password string `mapstructure:"password"`
 }
 
 func Init(filePath string) (err error) {
