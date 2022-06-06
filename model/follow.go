@@ -1,7 +1,8 @@
 package model
 
 import (
-	"github.com/gomodule/redigo/redis"
+	//"github.com/gomodule/redigo/redis"
+	"github.com/gistao/RedisGo-Async/redis"
 	"gorm.io/gorm"
 	"strconv"
 )
@@ -68,7 +69,8 @@ func NewFollowManagerRepository() *FollowManagerRepository {
 
 //id:follow表示id用户关注列表，id:fans表示id用户粉丝列表
 func (r *FollowManagerRepository) RedisInsert(uid, fid int64) error {
-	conn := r.redisCache.Conn()
+	//conn := r.redisCache.Conn()
+	conn := r.redisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -78,12 +80,14 @@ func (r *FollowManagerRepository) RedisInsert(uid, fid int64) error {
 	conn.Send("MULTI")
 	conn.Send("SADD", followKey, uid)
 	conn.Send("SADD", fansKey, fid)
-	_, err := conn.Do("EXEC")
+	//_, err := conn.Do("EXEC")
+	_, err := conn.AsyncDo("EXEC")
 	return err
 }
 
 func (r *FollowManagerRepository) RedisDelete(uid, fid int64) error {
-	conn := r.redisCache.Conn()
+	//conn := r.redisCache.Conn()
+	conn := r.redisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -92,7 +96,8 @@ func (r *FollowManagerRepository) RedisDelete(uid, fid int64) error {
 	conn.Send("MULTI")
 	conn.Send("SREM", followKey, uid)
 	conn.Send("SREM", fansKey, fid)
-	_, err := conn.Do("EXEC")
+	//_, err := conn.Do("EXEC")
+	_, err := conn.AsyncDo("EXEC")
 	return err
 }
 

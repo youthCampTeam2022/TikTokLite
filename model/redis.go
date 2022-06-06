@@ -1,7 +1,8 @@
 package model
 
 import (
-	"github.com/gomodule/redigo/redis"
+	//"github.com/gomodule/redigo/redis"
+	"github.com/gistao/RedisGo-Async/redis"
 	"time"
 )
 
@@ -11,6 +12,7 @@ const (
 
 type Cache struct {
 	pool              *redis.Pool
+	asyncPool         *redis.AsyncPool
 	defaultExpiration time.Duration
 }
 
@@ -32,8 +34,23 @@ func NewRedisCache(db int, host string, defaultExpiration time.Duration) *Cache 
 			return conn, nil
 		},
 	}
-	return &Cache{pool: pool, defaultExpiration: defaultExpiration}
+	asyncPool := &redis.AsyncPool{
+		Dial: func() (redis.AsynConn, error) {
+			conn, err := redis.AsyncDial("tcp", host, redis.DialDatabase(db))
+			if err != nil {
+				return nil, err
+			}
+
+			return conn, nil
+		},
+		MaxGetCount: 1000,
+	}
+	return &Cache{pool: pool, asyncPool: asyncPool, defaultExpiration: defaultExpiration}
 }
+
 func (c *Cache) Conn() redis.Conn {
 	return c.pool.Get()
+}
+func (c *Cache) AsynConn() redis.AsynConn {
+	return c.asyncPool.Get()
 }

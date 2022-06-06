@@ -3,7 +3,8 @@ package service
 import (
 	"TikTokLite/model"
 	"fmt"
-	"github.com/gomodule/redigo/redis"
+	//"github.com/gomodule/redigo/redis"
+	"github.com/gistao/RedisGo-Async/redis"
 	"log"
 	"strconv"
 	"time"
@@ -64,8 +65,8 @@ func BuildVideo(userID int64, _video model.Video) Video {
 }
 func GetUserFeed(latestTime time.Time, userId int64) ([]Video, int64, error) {
 	videoIDs, _ := model.GetUserFeedRedis(latestTime, userId)
-	conn := model.RedisCache.Conn()
-	defer conn.Close()
+	//conn := model.RedisCache.Conn()
+	//defer conn.Close()
 	var video Video
 	var videos []Video
 	var v model.Video
@@ -120,7 +121,8 @@ func UserFeedInit(userID int64) {
 		log.Println("get followlist failed:", err.Error())
 		return
 	}
-	conn := model.RedisCache.Conn()
+	//conn := model.RedisCache.Conn()
+	conn := model.RedisCache.AsynConn()
 	defer conn.Close()
 	userFeedKey := fmt.Sprintf("%s:%s", strconv.FormatInt(userID, 10), "userfeed")
 	for _, id := range follows {
@@ -129,8 +131,9 @@ func UserFeedInit(userID int64) {
 		for i := 0; i < len(vals); i += 2 {
 			k, _ := redis.Int64(vals[i], nil)
 			v, _ := redis.Int64(vals[i+1], nil)
-			//log.Println(k, v)
-			_, err = conn.Do("ZADD", userFeedKey, v, k)
+
+			//_, err = conn.Do("ZADD", userFeedKey, v, k)
+			_, err = conn.AsyncDo("ZADD", userFeedKey, v, k)
 			if err != nil {
 				log.Println("userfeed set failed:", err.Error())
 			}
@@ -139,12 +142,14 @@ func UserFeedInit(userID int64) {
 	hots := model.PullHotFeed(20)
 	for i := 0; i < len(hots); i++ {
 		createTime := model.GetVideoCreateTime(hots[i])
-		conn.Do("ZADD", userFeedKey, createTime, hots[i])
+		//_,_=conn.Do("ZADD", userFeedKey, createTime, hots[i])
+		_, _ = conn.AsyncDo("ZADD", userFeedKey, createTime, hots[i])
 	}
 }
 
 func AuthorFeedPushToNewFollower(authorID, followerID int64) {
-	conn := model.RedisCache.Conn()
+	//conn := model.RedisCache.Conn()
+	conn := model.RedisCache.AsynConn()
 	defer conn.Close()
 	authorFeedKey := fmt.Sprintf("%s:%s", strconv.FormatInt(authorID, 10), "authorfeed")
 	videos, err := redis.Int64s(conn.Do("ZREVRANGEBYSCORE", authorFeedKey, "+inf", "-inf", "withscores", "limit", 0, 10))
@@ -154,6 +159,7 @@ func AuthorFeedPushToNewFollower(authorID, followerID int64) {
 	}
 	userFeedKey := fmt.Sprintf("%s:%s", strconv.FormatInt(followerID, 10), "userfeed")
 	for i := 0; i < len(videos); i += 2 {
-		_, err = conn.Do("ZADD", userFeedKey, videos[i+1], videos[i])
+		//_, err = conn.Do("ZADD", userFeedKey, videos[i+1], videos[i])
+		_, err = conn.AsyncDo("ZADD", userFeedKey, videos[i+1], videos[i])
 	}
 }

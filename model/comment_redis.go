@@ -2,7 +2,8 @@ package model
 
 import (
 	"fmt"
-	"github.com/gomodule/redigo/redis"
+	//"github.com/gomodule/redigo/redis"
+	"github.com/gistao/RedisGo-Async/redis"
 	"log"
 	"strconv"
 )
@@ -35,12 +36,14 @@ func CommentKey2ID(key string) int64 {
 }
 
 func SetCommentNumRedis(videoID int64, num int64) {
-	conn := RedisCache.Conn()
+	//conn := RedisCache.Conn()
+	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
 	commentKey := ID2CommentKey(videoID)
-	_, err := conn.Do("ZADD", CommentSet, num, commentKey)
+	//_, err := conn.Do("ZADD", CommentSet, num, commentKey)
+	_, err := conn.AsyncDo("ZADD", CommentSet, num, commentKey)
 	if err != nil {
 		log.Print("err in SetCommentNumRedis:", err)
 		return
@@ -48,12 +51,14 @@ func SetCommentNumRedis(videoID int64, num int64) {
 }
 
 func IncrCommentRedis(videoID int64) {
-	conn := RedisCache.Conn()
+	//conn := RedisCache.Conn()
+	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
 	favoriteKey := ID2CommentKey(videoID)
-	_, err := conn.Do("ZINCRBY", CommentSet, 1 ,favoriteKey)
+	//_, err := conn.Do("ZINCRBY", CommentSet, 1, favoriteKey)
+	_, err := conn.AsyncDo("ZINCRBY", CommentSet, 1, favoriteKey)
 	if err != nil {
 		log.Print("err in IncrCommentRedis:", err)
 		return
@@ -61,12 +66,14 @@ func IncrCommentRedis(videoID int64) {
 }
 
 func DecrCommentRedis(videoID int64) {
-	conn := RedisCache.Conn()
+	//conn := RedisCache.Conn()
+	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
 	favoriteKey := ID2CommentKey(videoID)
-	_, err := conn.Do("ZINCRBY", CommentSet, -1, favoriteKey)
+	//_, err := conn.Do("ZINCRBY", CommentSet, -1, favoriteKey)
+	_, err := conn.AsyncDo("ZINCRBY", CommentSet, -1, favoriteKey)
 	if err != nil {
 		log.Print("err in DecrCommentRedis:", err)
 		return
@@ -78,20 +85,20 @@ func GetTopComment(n int) (top map[int64]int) {
 	defer func() {
 		_ = conn.Close()
 	}()
-	values, err := redis.Values(conn.Do("ZREVRANGE", CommentSet,0,n,"WITHSCORES"))
+	values, err := redis.Values(conn.Do("ZREVRANGE", CommentSet, 0, n, "WITHSCORES"))
 	if err != nil {
 		log.Println("err in GetTopComment:", err)
 		return nil
 	}
 	top = make(map[int64]int)
 	for i := 0; i < len(values); i += 2 {
-		key,_ := redis.String(values[i],nil)
-		v, _ := redis.Int64(values[i+1],nil)
-		if CommentKey2ID(key) == 0||v==0{
+		key, _ := redis.String(values[i], nil)
+		v, _ := redis.Int64(values[i+1], nil)
+		if CommentKey2ID(key) == 0 || v == 0 {
 			continue
 		}
 		top[CommentKey2ID(key)] = int(v)
 	}
-	fmt.Println("topComm",top)
+	//fmt.Println("topComm:",top)
 	return top
 }

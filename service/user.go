@@ -104,12 +104,15 @@ func (s *UserService) UserLogin(req *UserLoginOrRegisterRequest) (resp *UserLogi
 	}
 	resp.UserId = int64(u.ID)
 	resp.Token, resp.Response, err = GetToken(u)
-	conn := model.RedisCache.Conn()
+
+	//conn := model.RedisCache.Conn()
+	conn := model.RedisCache.AsynConn()
 	defer conn.Close()
 	//loginTimeKey := fmt.Sprintf("%s:%s", strconv.FormatInt(resp.UserId, 10), "loginTime")
 	//_, err = conn.Do("SET", loginTimeKey, time.Now().UnixMilli())
 	loginTimeKey := fmt.Sprintf("%s", strconv.FormatInt(resp.UserId, 10))
-	_, err = conn.Do("HSET", "aliveUser", loginTimeKey, time.Now().UnixMilli())
+	//_, err = conn.Do("HSET", "aliveUser", loginTimeKey, time.Now().UnixMilli())
+	_, err = conn.AsyncDo("HSET", "aliveUser", loginTimeKey, time.Now().UnixMilli())
 	return
 }
 
