@@ -1,13 +1,13 @@
 package model
 
 import (
+	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"log"
-	"sort"
 	"strconv"
 )
 
-const CommentHash = "comment"
+const CommentSet = "commentSet"
 
 func GetCommentNumRedis(videoID int64) (count int64) {
 	conn := RedisCache.Conn()
@@ -15,10 +15,10 @@ func GetCommentNumRedis(videoID int64) (count int64) {
 		_ = conn.Close()
 	}()
 	commentKey := ID2CommentKey(videoID)
-	//count
-	num, err := redis.Int64(conn.Do("HGET", CommentHash, commentKey))
+	num, err := redis.Int64(conn.Do("ZSCORE", CommentSet, commentKey))
 	if err != nil {
 		count = GetCommentNum(videoID)
+		fmt.Println(count)
 		SetCommentNumRedis(videoID, count)
 		return
 	}
@@ -40,9 +40,35 @@ func SetCommentNumRedis(videoID int64, num int64) {
 		_ = conn.Close()
 	}()
 	commentKey := ID2CommentKey(videoID)
-	_, err := conn.Do("HSET", CommentHash, commentKey, num)
+	_, err := conn.Do("ZADD", CommentSet, num, commentKey)
 	if err != nil {
 		log.Print("err in SetCommentNumRedis:", err)
+		return
+	}
+}
+
+func IncrCommentRedis(videoID int64) {
+	conn := RedisCache.Conn()
+	defer func() {
+		_ = conn.Close()
+	}()
+	favoriteKey := ID2CommentKey(videoID)
+	_, err := conn.Do("ZINCRBY", CommentSet, 1 ,favoriteKey)
+	if err != nil {
+		log.Print("err in IncrCommentRedis:", err)
+		return
+	}
+}
+
+func DecrCommentRedis(videoID int64) {
+	conn := RedisCache.Conn()
+	defer func() {
+		_ = conn.Close()
+	}()
+	favoriteKey := ID2CommentKey(videoID)
+	_, err := conn.Do("ZINCRBY", CommentSet, -1, favoriteKey)
+	if err != nil {
+		log.Print("err in DecrCommentRedis:", err)
 		return
 	}
 }
@@ -52,47 +78,20 @@ func GetTopComment(n int) (top map[int64]int) {
 	defer func() {
 		_ = conn.Close()
 	}()
-	values, err := redis.Values(conn.Do("HGETALL", CommentHash))
+	values, err := redis.Values(conn.Do("ZREVRANGE", CommentSet,0,n,"WITHSCORES"))
 	if err != nil {
-		log.Print("err in GetTopComment:", err)
+		log.Println("err in GetTopComment:", err)
 		return nil
 	}
-	var commTop CommentTops
-	for i := 0; i < len(values); i += 2 {
-		b := values[i+1].([]uint8)
-		num, _ := strconv.Atoi(string(b))
-		commTop = append(commTop, CommentTop{
-			id:  FavoriteKey2ID(string(values[i].([]uint8))),
-			num: num,
-		})
-	}
-	sort.Sort(commTop)
-	//现有的不够,从其他补（待定）
-	//if n > commTop.Len(){
-	//	return nil
-	//}
 	top = make(map[int64]int)
-	for i := 0; i < min(n, len(commTop)); i++ {
-		top[commTop[i].id] = commTop[i].num
+	for i := 0; i < len(values); i += 2 {
+		key,_ := redis.String(values[i],nil)
+		v, _ := redis.Int64(values[i+1],nil)
+		if CommentKey2ID(key) == 0||v==0{
+			continue
+		}
+		top[CommentKey2ID(key)] = int(v)
 	}
+	fmt.Println("topComm",top)
 	return top
-}
-
-type CommentTops []CommentTop
-
-type CommentTop struct {
-	id  int64
-	num int
-}
-
-func (c CommentTops) Len() int {
-	return len(c)
-}
-
-func (c CommentTops) Less(i, j int) bool {
-	return c[i].num > c[j].num
-}
-
-func (c CommentTops) Swap(i, j int) {
-	c[i], c[j] = c[j], c[i]
 }

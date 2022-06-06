@@ -55,11 +55,21 @@ func GetCommentRes(videoID int64, userID int64) (comments []CommentRes, err erro
 }
 
 func (c *Comment) Create() error {
-	return DB.Create(&c).Error
+	err := DB.Create(&c).Error
+	if err != nil{
+		return err
+	}
+	IncrCommentRedis(c.VideoID)
+	return nil
 }
 
 func (c *Comment) Delete() error {
-	return DB.Delete(&c).Error
+	err := DB.Delete(&c).Error
+	if err!= nil{
+		return err
+	}
+	DecrCommentRedis(c.VideoID)
+	return nil
 }
 
 func (c *Comment) DeleteByUser() error {
