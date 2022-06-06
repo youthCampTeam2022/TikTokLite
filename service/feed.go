@@ -137,7 +137,23 @@ func UserFeedInit(userID int64) {
 		}
 	}
 	hots := model.PullHotFeed(20)
-	for i := 0; i < len(hots); i += 2 {
-		conn.Do("ZADD", userFeedKey, hots[i+1], hots[i])
+	for i := 0; i < len(hots); i++ {
+		createTime := model.GetVideoCreateTime(hots[i])
+		conn.Do("ZADD", userFeedKey, createTime, hots[i])
+	}
+}
+
+func AuthorFeedPushToNewFollower(authorID, followerID int64) {
+	conn := model.RedisCache.Conn()
+	defer conn.Close()
+	authorFeedKey := fmt.Sprintf("%s:%s", strconv.FormatInt(authorID, 10), "authorfeed")
+	videos, err := redis.Int64s(conn.Do("ZREVRANGEBYSCORE", authorFeedKey, "+inf", "-inf", "withscores", "limit", 0, 10))
+	if err != nil {
+		log.Println("get authorfeed error:", err.Error())
+		return
+	}
+	userFeedKey := fmt.Sprintf("%s:%s", strconv.FormatInt(followerID, 10), "userfeed")
+	for i := 0; i < len(videos); i += 2 {
+		_, err = conn.Do("ZADD", userFeedKey, videos[i+1], videos[i])
 	}
 }

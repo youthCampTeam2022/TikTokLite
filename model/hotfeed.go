@@ -70,10 +70,10 @@ func PullHotFeed(n int) []int64 {
 		fmt.Println("err in PullHotFeed:", err)
 		return nil
 	}
-	if 2*n > len(res) {
-		n = len(res) / 2
+	if n > len(res) {
+		n = len(res)
 	}
-	return res[:2*n]
+	return res[:n]
 }
 
 // ToScore todo:给时间加权没写好
@@ -95,8 +95,9 @@ func CheckAliveUserAndPushHotFeed() {
 	for k, v := range vals {
 		if time.UnixMilli(v).Add(aliveTime).After(time.Now()) {
 			userFeedKey = fmt.Sprintf("%s:%s", k, "userfeed")
-			for i := 0; i < len(hots); i += 2 {
-				conn.Do("ZADD", userFeedKey, hots[i+1], hots[i])
+			for i := 0; i < len(hots); i++ {
+				createTime := GetVideoCreateTime(hots[i])
+				conn.Do("ZADD", userFeedKey, createTime, hots[i])
 			}
 		} else {
 			_, _ = conn.Do("HDEL", "aliveUser", k)

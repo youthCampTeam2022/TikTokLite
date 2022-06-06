@@ -63,7 +63,7 @@ func GetLatestVideo() (Video, error) {
 func GetVideoCreateTime(videoID int64) int64 {
 	var t time.Time
 	DB.Model(&Video{}).Where("id = ?", videoID).Select("created_at").Scan(&t)
-	return t.Unix()
+	return t.UnixMilli()
 }
 
 // Authorfeed增加新的视频

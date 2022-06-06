@@ -57,6 +57,7 @@ type RelationFollowListResponse struct {
 func (s *FollowService) RedisRelationAction(req *RelationActionRequest) (resp *RelationActionResponse, err error) {
 	if req.ActionType == 1 {
 		err = s.FollowRepository.RedisInsert(req.ToUserID, req.UserID)
+		AuthorFeedPushToNewFollower(req.ToUserID, req.UserID)
 	} else {
 		err = s.FollowRepository.RedisDelete(req.ToUserID, req.UserID)
 	}
