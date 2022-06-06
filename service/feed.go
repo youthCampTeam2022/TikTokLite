@@ -48,7 +48,7 @@ func BuildVideo(userID int64, _video model.Video) Video {
 	var video Video
 	videoID := int64(_video.ID)
 	isFavorite, err := model.IsFavorite(userID, videoID)
-	log.Println(video)
+	//log.Println(video)
 	if err != nil {
 		return video
 	}
@@ -135,5 +135,9 @@ func UserFeedInit(userID int64) {
 				log.Println("userfeed set failed:", err.Error())
 			}
 		}
+	}
+	hots := model.PullHotFeed2(20)
+	for i := 0; i < len(hots); i += 2 {
+		conn.Do("ZADD", userFeedKey, hots[i+1], hots[i])
 	}
 }

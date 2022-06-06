@@ -7,6 +7,7 @@ import (
 	"TikTokLite/util"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 func main() {
@@ -18,5 +19,14 @@ func main() {
 	r := gin.Default()
 	router.RouterInit(r)
 	util.FilterInit()
+	//定时更新hotfeed和推送
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			model.BuildHotFeed()
+			model.CheckAliveUserAndPushHotFeed()
+		}
+	}()
 	r.Run(fmt.Sprintf(":%d", setting.Conf.Port))
 }
