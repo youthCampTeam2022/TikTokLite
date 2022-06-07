@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	FeedSize  = 10
+	FeedSize  = 30
 	aliveTime = time.Hour * 24
 )
 
@@ -35,9 +35,6 @@ func (v *Video) Create() error {
 	//更新userfeed
 	_ = pushNewVideoToActiveUsersFeed(v.AuthorId, int64(v.ID), now)
 	return err
-	//if err != nil {
-	//	return errors.New("insert AuthorFeed in Redis failed")
-	//}
 }
 
 func GetVideosByUserId(userId int64) ([]Video, error) {
@@ -137,7 +134,8 @@ func GetUserFeedRedis(latestTime time.Time, userId int64) ([]int64, error) {
 	userFeedTimeStamp := fmt.Sprintf("%s:%s", id, "feedtimestamp")
 	timeStamp, err = redis.Int64(conn.Do("GET", userFeedTimeStamp))
 	if err == redis.ErrNil || offset == 0 {
-		timeStamp = latestTime.UnixMilli()
+		//timeStamp = latestTime.UnixMilli()
+		timeStamp = time.Now().UnixMilli()
 		//_,_=conn.Do("SET", userFeedTimeStamp, timeStamp)
 		_, _ = conn.AsyncDo("SET", userFeedTimeStamp, timeStamp)
 	}
@@ -147,17 +145,9 @@ func GetUserFeedRedis(latestTime time.Time, userId int64) ([]int64, error) {
 	//意味着feed流已查询到底
 	if len(vals) < FeedSize*2 {
 		offset = 0
-		timeStamp = time.Now().UnixMilli()
-		//获取userfeed流最新的时间戳并修改
-		latestVideo, err := redis.Int64s(conn.Do("ZREVRANGEBYSCORE", key, "+inf", 0, "withscores", "limit", 0, 1))
-		if err != nil && len(latestVideo) > 0 {
-			timeStamp = latestVideo[0]
-		}
-		_, _ = conn.AsyncDo("SET", userFeedTimeStamp, timeStamp)
-		//timeStamp = time.Now().Add(time.Minute).UnixMilli()
-		//_,_=conn.Do("SET", userFeedTimeStamp, timeStamp)
 		//如果没视频，则offset置0再拉取一遍
 		if len(vals) == 0 {
+			timeStamp = time.Now().UnixMilli()
 			vals, err = redis.Int64s(conn.Do("ZREVRANGEBYSCORE", key, timeStamp, 0, "withscores", "limit", offset, FeedSize))
 			offset += FeedSize
 			if len(vals) < FeedSize*2 {
