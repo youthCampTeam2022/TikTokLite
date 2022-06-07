@@ -4,14 +4,17 @@ import (
 	"TikTokLite/model"
 	"TikTokLite/setting"
 	"TikTokLite/util"
+	bytes2 "bytes"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
+	"io"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -47,6 +50,8 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 		log.Println("执行ffmpeg失败：", err)
 		return "", "", err
 	}
+	//go uploadVideoToCloud(videoPath, videoName)
+	//go uploadCoverToCloud(coverPath, coverName)
 	var playUrl, coverUrl string
 	//上传至七牛云
 	if setting.Conf.PublishConfig.Mode {
@@ -74,9 +79,40 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 		coverUrl = setting.Conf.QiNiuCloudCoverUrlPrefix + coverName
 		return playUrl, coverUrl, nil
 	}
-	playUrl = fmt.Sprintf("http://%s:%d/static/videos/%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
-	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
+	playUrl = fmt.Sprintf("http://%s:%d/static/videos/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
+	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
+	//playUrl = fmt.Sprintf("http://0.0.0.0:0000/static/videos/?name=%s", videoName)
+	//coverUrl = fmt.Sprintf("http://0.0.0.0:0000/static/covers/?name=%s", coverName)
 	return playUrl, coverUrl, nil
+}
+
+func uploadVideoToCloud(videoPath, videoName string) error {
+	buf := bytes2.Buffer{}
+	bodyWriter := multipart.NewWriter(&buf)
+	fileWriter, _ := bodyWriter.CreateFormFile("video", videoPath)
+	f, _ := os.Open(videoPath)
+	defer f.Close()
+	io.Copy(fileWriter, f)
+	contenType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	url := fmt.Sprintf("http://0.0.0.0:0000/upload_video?video_name=%s", videoName)
+	http.Post(url, contenType, &buf)
+	return nil
+}
+func uploadCoverToCloud(coverPath, coverName string) error {
+	buf := bytes2.Buffer{}
+	bodyWriter := multipart.NewWriter(&buf)
+	fileWriter, _ := bodyWriter.CreateFormFile("cover", coverPath)
+	f, _ := os.Open(coverPath)
+	defer f.Close()
+	io.Copy(fileWriter, f)
+	contenType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	url := fmt.Sprintf("http://0.0.0.0:0000/upload_cover?cover_name=%s", coverName)
+	http.Post(url, contenType, &buf)
+	return nil
 }
 
 func uploadVideoToQiNiuCloud(video, cover multipart.File, videoName, coverName string, videoSize, coverSize int64) error {
