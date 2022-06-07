@@ -20,14 +20,13 @@ import (
 	"path/filepath"
 )
 
-func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (string, string, error) {
+func PublishVideo(data *multipart.FileHeader, userId int64, video model.Video, c *gin.Context) error {
 	filename := filepath.Base(data.Filename)
 	videoData, err := data.Open()
 	if err != nil {
 		log.Println("获取data数据失败：", err)
-		return "", "", err
+		return err
 	}
-	defer videoData.Close()
 	//获取uuid，拼接视频名称，方便调试就先加上user_id和视频名称
 	uuid := util.GetUUID()
 	//先把视频保存本地，再制作封面，再一起上传到七牛云，完成后删除本地视频和封面
@@ -36,54 +35,47 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 	//先保存本地然后取出第一帧之,(后可选一起上传至七牛云)
 	if err := c.SaveUploadedFile(data, videoPath); err != nil {
 		log.Println("本地存储video失败", err)
-		return "", "", err
+		return err
 	}
 	//截取第一帧做封面
 	coverName, err := getCoverName(videoName)
 	if err != nil {
 		log.Println("获取coverName失败：", err)
-		return "", "", err
+		return err
 	}
 	coverPath := setting.Conf.CoverPathPrefix + coverName
 	cmd := exec.Command("ffmpeg", "-i", videoPath, "-y", "-f", "mjpeg", "-ss", "0.1", "-t", "0.001", coverPath)
 	if err := cmd.Run(); err != nil {
 		log.Println("执行ffmpeg失败：", err)
-		return "", "", err
+		return err
 	}
 	//go uploadVideoToCloud(videoPath, videoName)
 	//go uploadCoverToCloud(coverPath, coverName)
 	var playUrl, coverUrl string
 	//上传至七牛云
 	if setting.Conf.PublishConfig.Mode {
-		cover, err := os.Open(coverPath)
-		if err != nil {
-			log.Println("创建cover失败：", err)
-			return "", "", err
-		}
-		defer os.Remove(videoPath)
-		//因为先进后出，所以得先关闭链接之后再删除
-		defer os.Remove(coverPath)
-		defer cover.Close()
-		//最后上传至七牛云
-		co, err := cover.Stat()
-		if err != nil {
-			log.Println("打开cover.Stat失败：", err)
-			return "", "", err
-		}
-		err = uploadVideoToQiNiuCloud(videoData, cover, videoName, coverName, data.Size, co.Size())
-		if err != nil {
-			log.Println("七牛云上传失败：", err)
-			return "", "", err
-		}
+
 		playUrl = setting.Conf.QiNiuCloudPlayUrlPrefix + videoName
 		coverUrl = setting.Conf.QiNiuCloudCoverUrlPrefix + coverName
-		return playUrl, coverUrl, nil
+		video.PlayUrl = playUrl
+		video.CoverUrl = coverUrl
+		go func() {
+			err = uploadVideoToQiNiuCloud(videoData, videoName, coverName, videoPath, coverPath, data.Size, video)
+			if err != nil {
+				log.Println("七牛云上传失败：", err)
+			}
+		}()
+		return nil
 	}
 	playUrl = fmt.Sprintf("http://%s:%d/static/videos/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
 	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
 	//playUrl = fmt.Sprintf("http://0.0.0.0:0000/static/videos/?name=%s", videoName)
 	//coverUrl = fmt.Sprintf("http://0.0.0.0:0000/static/covers/?name=%s", coverName)
-	return playUrl, coverUrl, nil
+	video.PlayUrl = playUrl
+	video.CoverUrl = coverUrl
+	CreateVideo(&video)
+	videoData.Close()
+	return nil
 }
 
 func uploadVideoToCloud(videoPath, videoName string) error {
@@ -115,7 +107,23 @@ func uploadCoverToCloud(coverPath, coverName string) error {
 	return nil
 }
 
-func uploadVideoToQiNiuCloud(video, cover multipart.File, videoName, coverName string, videoSize, coverSize int64) error {
+func uploadVideoToQiNiuCloud(videoData multipart.File, videoName, coverName, videoPath, coverPath string, videoSize int64, video model.Video) error {
+	defer videoData.Close()
+	cover, err := os.Open(coverPath)
+	if err != nil {
+		log.Println("创建cover失败：", err)
+		return err
+	}
+	defer os.Remove(videoPath)
+	//因为先进后出，所以得先关闭链接之后再删除
+	defer os.Remove(coverPath)
+	defer cover.Close()
+	//最后上传至七牛云
+	co, err := cover.Stat()
+	if err != nil {
+		log.Println("打开cover.Stat失败：", err)
+		return err
+	}
 	//上传的路径+文件名
 	videoKey := fmt.Sprintf("videos/%s", videoName)
 	coverKey := fmt.Sprintf("covers/%s", coverName)
@@ -142,17 +150,18 @@ func uploadVideoToQiNiuCloud(video, cover multipart.File, videoName, coverName s
 		//	"x:name": "github logo",
 		//},
 	}
-	err := formUploader.Put(context.Background(), &ret, upToken, videoKey, video, videoSize, &putExtra)
+	err = formUploader.Put(context.Background(), &ret, upToken, videoKey, videoData, videoSize, &putExtra)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 	//fmt.Println(ret.Key, ret.Hash) //打印此次上传的一些信息
-	err = formUploader.Put(context.Background(), &ret, upToken, coverKey, cover, coverSize, &putExtra)
+	err = formUploader.Put(context.Background(), &ret, upToken, coverKey, cover, co.Size(), &putExtra)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
+	CreateVideo(&video)
 	//fmt.Println(ret.Key, ret.Hash)
 	return nil
 }
