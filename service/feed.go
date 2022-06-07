@@ -64,6 +64,7 @@ func BuildVideo(userID int64, _video model.Video) Video {
 	return video
 }
 func GetUserFeed(latestTime time.Time, userId int64) ([]Video, int64, error) {
+	//latestTime = latestTime.Add(5 * time.Minute)
 	videoIDs, _ := model.GetUserFeedRedis(latestTime, userId)
 	//conn := model.RedisCache.Conn()
 	//defer conn.Close()
@@ -73,31 +74,6 @@ func GetUserFeed(latestTime time.Time, userId int64) ([]Video, int64, error) {
 	//log.Println("videoID:", videoIDs)
 	for i := 0; i < len(videoIDs); i += 2 {
 		id := videoIDs[i]
-		//s, err := redis.Bytes(conn.Do("HGET", "videos", id))
-		//if err != nil {
-		//	if err == redis.ErrNil {
-		//		v, err = model.GetVideoByID(id)
-		//		video = BuildVideo(userId, v)
-		//		val, err := json.Marshal(video)
-		//		if err != nil {
-		//			log.Println("marshal video failed:", err.Error())
-		//		}
-		//		_, err = conn.Do("HMSET", "videos", id, val)
-		//		if err != nil {
-		//			log.Println("cache video in redis failed:", err.Error())
-		//		}
-		//	} else {
-		//		return nil, -1, err
-		//	}
-		//} else {
-		//	err := json.Unmarshal(s, &video)
-		//	//log.Println("!!!!!!!", video)
-		//	if err != nil {
-		//		log.Println("unmarshal failed:", err.Error())
-		//		return nil, -1, err
-		//	}
-		//}
-		//log.Println(video)
 		var err error
 		v, err = model.GetVideoByID(id)
 		if err != nil {
@@ -109,9 +85,11 @@ func GetUserFeed(latestTime time.Time, userId int64) ([]Video, int64, error) {
 	}
 	//log.Println(videos)
 	var nextTime = time.Now().UnixMilli()
-	if len(videos) > 0 {
+	if len(videos) > 0 && len(videos) == model.FeedSize {
 		nextTime = videoIDs[len(videoIDs)-1]
 	}
+	//log.Println(latestTime.UnixMilli(), nextTime, videoIDs, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+
+	//	"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	return videos, nextTime, nil
 }
 
@@ -161,5 +139,17 @@ func AuthorFeedPushToNewFollower(authorID, followerID int64) {
 	for i := 0; i < len(videos); i += 2 {
 		//_, err = conn.Do("ZADD", userFeedKey, videos[i+1], videos[i])
 		_, err = conn.AsyncDo("ZADD", userFeedKey, videos[i+1], videos[i])
+	}
+}
+
+func UpdateUnLoginFeed() {
+	conn := model.RedisCache.AsynConn()
+	defer conn.Close()
+	userFeedKey := "-1:userfeed"
+	hots := model.PullHotFeed(20)
+	for i := 0; i < len(hots); i++ {
+		createTime := model.GetVideoCreateTime(hots[i])
+		//_,_=conn.Do("ZADD", userFeedKey, createTime, hots[i])
+		_, _ = conn.AsyncDo("ZADD", userFeedKey, createTime, hots[i])
 	}
 }

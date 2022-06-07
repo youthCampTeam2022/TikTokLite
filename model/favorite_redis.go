@@ -94,7 +94,10 @@ func GetTopFavorite(n int) (top map[int64]int) {
 	for i := 0; i < len(values); i += 2 {
 		key, _ := redis.String(values[i], nil)
 		v, _ := redis.Int64(values[i+1], nil)
-		if FavoriteKey2ID(key) == 0 || v == 0 {
+		//if FavoriteKey2ID(key) == 0 || v == 0 {
+		//	continue
+		//}
+		if FavoriteKey2ID(key) == 0 {
 			continue
 		}
 		top[FavoriteKey2ID(key)] = int(v)

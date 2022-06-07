@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	feedSize  = 4
+	FeedSize  = 10
 	aliveTime = time.Hour * 24
 )
 
@@ -26,7 +26,7 @@ type Video struct {
 func (v *Video) Create() error {
 
 	err := DB.Create(&v).Error
-	now := time.Now().UnixMilli()
+	now := v.CreatedAt.UnixMilli()
 	//初始化redis中的点赞数和评论数
 	SetFavoriteNumRedis(int64(v.ID), 0)
 	SetCommentNumRedis(int64(v.ID), 0)
@@ -48,13 +48,13 @@ func GetVideosByUserId(userId int64) ([]Video, error) {
 
 func GetVideosByLatestTime(latestTime time.Time) ([]Video, error) {
 	var videos []Video
-	query := DB.Order("created_at desc").Where("created_at > ?", latestTime).Limit(feedSize).Find(&videos)
+	query := DB.Order("created_at desc").Where("created_at > ?", latestTime).Limit(FeedSize).Find(&videos)
 	return videos, query.Error
 }
 
 func GetTheLatestNVideos() ([]Video, error) {
 	var videos []Video
-	query := DB.Order("created_at desc").Limit(feedSize).Find(&videos)
+	query := DB.Order("created_at desc").Limit(FeedSize).Find(&videos)
 	return videos, query.Error
 }
 
@@ -136,20 +136,34 @@ func GetUserFeedRedis(latestTime time.Time, userId int64) ([]int64, error) {
 	//存储对应用户feed流的起始时间
 	userFeedTimeStamp := fmt.Sprintf("%s:%s", id, "feedtimestamp")
 	timeStamp, err = redis.Int64(conn.Do("GET", userFeedTimeStamp))
-	if err == redis.ErrNil {
+	if err == redis.ErrNil || offset == 0 {
 		timeStamp = latestTime.UnixMilli()
 		//_,_=conn.Do("SET", userFeedTimeStamp, timeStamp)
 		_, _ = conn.AsyncDo("SET", userFeedTimeStamp, timeStamp)
 	}
 	var vals []int64
-	vals, err = redis.Int64s(conn.Do("ZREVRANGEBYSCORE", key, timeStamp, 0, "withscores", "limit", offset, feedSize))
-	offset += feedSize
+	vals, err = redis.Int64s(conn.Do("ZREVRANGEBYSCORE", key, timeStamp, 0, "withscores", "limit", offset, FeedSize))
+	offset += FeedSize
 	//意味着feed流已查询到底
-	if len(vals) < feedSize*2 {
+	if len(vals) < FeedSize*2 {
 		offset = 0
 		timeStamp = time.Now().UnixMilli()
-		//_,_=conn.Do("SET", userFeedTimeStamp, timeStamp)
+		//获取userfeed流最新的时间戳并修改
+		latestVideo, err := redis.Int64s(conn.Do("ZREVRANGEBYSCORE", key, "+inf", 0, "withscores", "limit", 0, 1))
+		if err != nil && len(latestVideo) > 0 {
+			timeStamp = latestVideo[0]
+		}
 		_, _ = conn.AsyncDo("SET", userFeedTimeStamp, timeStamp)
+		//timeStamp = time.Now().Add(time.Minute).UnixMilli()
+		//_,_=conn.Do("SET", userFeedTimeStamp, timeStamp)
+		//如果没视频，则offset置0再拉取一遍
+		if len(vals) == 0 {
+			vals, err = redis.Int64s(conn.Do("ZREVRANGEBYSCORE", key, timeStamp, 0, "withscores", "limit", offset, FeedSize))
+			offset += FeedSize
+			if len(vals) < FeedSize*2 {
+				offset = 0
+			}
+		}
 	}
 	//_, _ = conn.Do("SET", userOffset, offset)
 	_, _ = conn.AsyncDo("SET", userOffset, offset)

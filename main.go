@@ -3,6 +3,7 @@ package main
 import (
 	"TikTokLite/model"
 	"TikTokLite/router"
+	"TikTokLite/service"
 	"TikTokLite/setting"
 	"TikTokLite/util"
 	"fmt"
@@ -19,13 +20,15 @@ func main() {
 	r := gin.Default()
 	router.RouterInit(r)
 	util.FilterInit()
+	service.UpdateUnLoginFeed()
 	//定时更新hotfeed和推送
 	go func() {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
 			model.BuildHotFeed()
 			model.CheckAliveUserAndPushHotFeed()
+			service.UpdateUnLoginFeed()
 		}
 	}()
 	r.Run(fmt.Sprintf(":%d", setting.Conf.Port))

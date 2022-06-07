@@ -15,6 +15,13 @@ func ValidDataTokenMiddleWare(c *gin.Context) {
 	if !exist {
 		tokenString = c.PostForm("token")
 	}
+	if tokenString == "" {
+		c.Abort()
+		c.JSON(http.StatusOK, gin.H{
+			"status_code": 0,
+		})
+		return
+	}
 	token, err := jwt.ParseWithClaims(tokenString, &service.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(service.SecretKey), nil
 	})
