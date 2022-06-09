@@ -36,13 +36,11 @@ func CommentKey2ID(key string) int64 {
 }
 
 func SetCommentNumRedis(videoID int64, num int64) {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
 	commentKey := ID2CommentKey(videoID)
-	//_, err := conn.Do("ZADD", CommentSet, num, commentKey)
 	_, err := conn.AsyncDo("ZADD", CommentSet, num, commentKey)
 	if err != nil {
 		log.Print("err in SetCommentNumRedis:", err)

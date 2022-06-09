@@ -25,14 +25,12 @@ func Feed(c *gin.Context) {
 		middleware.ValidDataTokenMiddleWare(c)
 		ifUserId, _ := c.Get("user_id")
 		userId = ifUserId.(int64)
-		//userId, _ = strconv.ParseInt(strUserId.(string), 10, 64)
 	}
 	latestTime := time.Now().UnixMilli()
 	strLatestTime, exist := c.GetQuery("latest_time")
 	if exist {
 		latestTime, _ = strconv.ParseInt(strLatestTime, 10, 64)
 	}
-	//videoList, nextTime, err := service.GetFeed(time.UnixMilli(latestTime), userId)
 	videoList, nextTime, err := service.GetUserFeed(time.UnixMilli(latestTime), userId)
 	if err != nil {
 		resp.StatusCode = 1

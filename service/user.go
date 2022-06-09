@@ -104,14 +104,9 @@ func (s *UserService) UserLogin(req *UserLoginOrRegisterRequest) (resp *UserLogi
 	}
 	resp.UserId = int64(u.ID)
 	resp.Token, resp.Response, err = GetToken(u)
-
-	//conn := model.RedisCache.Conn()
 	conn := model.RedisCache.AsynConn()
 	defer conn.Close()
-	//loginTimeKey := fmt.Sprintf("%s:%s", strconv.FormatInt(resp.UserId, 10), "loginTime")
-	//_, err = conn.Do("SET", loginTimeKey, time.Now().UnixMilli())
 	loginTimeKey := fmt.Sprintf("%s", strconv.FormatInt(resp.UserId, 10))
-	//_, err = conn.Do("HSET", "aliveUser", loginTimeKey, time.Now().UnixMilli())
 	_, err = conn.AsyncDo("HSET", "aliveUser", loginTimeKey, time.Now().UnixMilli())
 	return
 }
@@ -138,15 +133,8 @@ func (s *UserService) UserRegister(req *UserLoginOrRegisterRequest) (resp *UserL
 
 //UserInfo 获取用户基本信息
 func (s *UserService) UserInfo(req *UserInfoRequest) (resp *UserInfoResponse, err error) {
-	//var u model.User
 	resp = new(UserInfoResponse)
-	//resp.Response, err = s.getUserById(&u, uint(req.UserId))
 	resp.Response = BuildResponse(nil)
 	resp.User = BuildUser(req.UserId, req.UserId, model.NewFollowManagerRepository())
-	//resp.FollowCount = 0
-	//resp.FollowerCount = 0
-	//resp.Id = int64(u.ID)
-	//resp.IsFollow = false
-	//resp.Name = u.Name
 	return
 }

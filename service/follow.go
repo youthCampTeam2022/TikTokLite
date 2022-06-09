@@ -39,21 +39,6 @@ type RelationFollowListResponse struct {
 	Users []User `json:"user_list"`
 }
 
-//func (s *FollowService) RelationAction(req *RelationActionRequest) (resp *RelationActionResponse, err error) {
-//	if req.ActionType == 1 {
-//		f := &model.Follow{
-//			FollowerID: req.UserID,
-//			UserID:     req.ToUserID,
-//		}
-//		err = s.FollowRepository.Insert(f)
-//	} else {
-//		err = s.FollowRepository.Delete(req.ToUserID, req.UserID)
-//	}
-//	resp = new(RelationActionResponse)
-//	resp.Response = BuildResponse(err)
-//	return
-//}
-
 func (s *FollowService) RedisRelationAction(req *RelationActionRequest) (resp *RelationActionResponse, err error) {
 	if req.ActionType == 1 {
 		err = s.FollowRepository.RedisInsert(req.ToUserID, req.UserID)

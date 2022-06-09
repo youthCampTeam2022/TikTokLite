@@ -17,9 +17,7 @@ func main() {
 		return
 	}
 	model.Init()
-	r := gin.Default()
-	router.RouterInit(r)
-	util.FilterInit()
+	model.BuildHotFeed()
 	service.UpdateUnLoginFeed()
 	//定时更新hotfeed和推送
 	go func() {
@@ -31,5 +29,12 @@ func main() {
 			service.UpdateUnLoginFeed()
 		}
 	}()
-	r.Run(fmt.Sprintf(":%d", setting.Conf.Port))
+	r := gin.Default()
+	router.RouterInit(r)
+	util.FilterInit()
+	err := r.Run(fmt.Sprintf(":%d", setting.Conf.Port))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

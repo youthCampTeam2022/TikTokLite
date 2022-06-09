@@ -59,7 +59,6 @@ func FavoriteAction(c *gin.Context) {
 // FavoriteList 获取点赞列表
 func FavoriteList(c *gin.Context) {
 	userIDToken, _ := c.GetQuery("user_id")
-	//userID := userIDToken.(int64)
 	userID, _ := strconv.ParseInt(userIDToken, 10, 64)
 	list, err := service.GetFavoriteList(userID)
 	if err != nil {

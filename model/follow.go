@@ -1,7 +1,6 @@
 package model
 
 import (
-	//"github.com/gomodule/redigo/redis"
 	"github.com/gistao/RedisGo-Async/redis"
 	"gorm.io/gorm"
 	"strconv"
@@ -36,36 +35,6 @@ type FollowManagerRepository struct {
 func NewFollowManagerRepository() *FollowManagerRepository {
 	return &FollowManagerRepository{DB, RedisCache}
 }
-
-//func (r *FollowManagerRepository) Insert(f *Follow) error {
-//	tmp := &Follow{}
-//	var err error
-//	res := r.db.Where("user_id=? AND follower_id=?", f.UserID, f.FollowerID).First(tmp)
-//	if res.Error != nil {
-//		if res.Error == gorm.ErrRecordNotFound {
-//			err = r.db.Create(f).Error
-//
-//		} else {
-//			err = res.Error
-//		}
-//	}
-//	return err
-//	//return r.db.Create(f).Error
-//}
-//
-//func (r *FollowManagerRepository) Delete(uid, fid int64) error {
-//	return r.db.Unscoped().Where("follower_id=? AND user_id=?", fid, uid).Delete(&Follow{}).Error
-//}
-//
-////GetFollowerList 获取粉丝用户列表
-//func (r *FollowManagerRepository) GetFollowerList(followers *[]Follow, userID int64) error {
-//	return r.db.Where("user_id=?", userID).Scan(followers).Error
-//}
-//
-////GetFollowList 获取关注用户列表
-//func (r *FollowManagerRepository) GetFollowList(follows *[]Follow, followerID int64) error {
-//	return r.db.Where("follows.follower_id=?", followerID).Scan(follows).Error
-//}
 
 //id:follow表示id用户关注列表，id:fans表示id用户粉丝列表
 func (r *FollowManagerRepository) RedisInsert(uid, fid int64) error {

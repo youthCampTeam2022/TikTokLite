@@ -28,7 +28,6 @@ type UserRes struct {
 	IsFollow      bool   `json:"is_follow,omitempty"`
 }
 
-// GetCommentRes todo: redis能正常用的话这部分可以不用联查了
 func GetCommentRes(videoID int64, userID int64) (comments []CommentRes, err error) {
 	f := FollowManagerRepository{DB, RedisCache}
 	rows, err := DB.Raw("SELECT comments.id,comments.content,comments.created_at,users.id,users.name "+
@@ -79,10 +78,5 @@ func (c *Comment) DeleteByUser() error {
 
 func GetCommentNum(videoID int64) (count int64) {
 	DB.Model(&Comment{}).Where("video_id = ?", videoID).Count(&count)
-	return
-}
-
-func GetCommentsByVideo(videoID int64) (comments []Comment, err error) {
-	err = DB.Model(&Comment{}).Where("video_id = ?", videoID).Find(&comments).Order("created_at DESC").Error
 	return
 }

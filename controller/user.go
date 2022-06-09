@@ -51,7 +51,6 @@ func (uc *UserController) Register(c *gin.Context) {
 	}
 	has := md5.Sum([]byte(password))
 	req.Password = fmt.Sprintf("%X", has)
-	//fmt.Println(req) ///
 	resp, err := uc.service.UserRegister(&req)
 	if err != nil {
 		sendErrResponse(c, resp.Response)

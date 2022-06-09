@@ -51,12 +51,10 @@ func BuildHotFeed() {
 }
 
 func InsertHotFeed(vid int64, score int) {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
-	//_, err := conn.Do("ZADD", HotFeedKey, score, vid)
 	_, err := conn.AsyncDo("ZADD", HotFeedKey, score, vid)
 	if err != nil {
 		log.Println("err in InsertHotFeed:", err)
@@ -68,7 +66,6 @@ func PullHotFeed(n int) []int64 {
 	defer func() {
 		_ = conn.Close()
 	}()
-
 	res, err := redis.Int64s(conn.Do("ZREVRANGEBYSCORE", HotFeedKey, "+inf", "-inf"))
 	if err != nil {
 		fmt.Println("err in PullHotFeed:", err)
@@ -80,13 +77,11 @@ func PullHotFeed(n int) []int64 {
 	return res[:n]
 }
 
-// ToScore todo:给时间加权没写好
 func (h *HotCounter) ToScore() int {
 	return h.favorite + (h.comment * 2)
 }
 
 func CheckAliveUserAndPushHotFeed() {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer conn.Close()
 
@@ -102,11 +97,9 @@ func CheckAliveUserAndPushHotFeed() {
 			userFeedKey = fmt.Sprintf("%s:%s", k, "userfeed")
 			for i := 0; i < len(hots); i++ {
 				createTime := GetVideoCreateTime(hots[i])
-				//conn.Do("ZADD", userFeedKey, createTime, hots[i])
 				_, _ = conn.AsyncDo("ZADD", userFeedKey, createTime, hots[i])
 			}
 		} else {
-			//_, _ = conn.Do("HDEL", "aliveUser", k)
 			_, _ = conn.AsyncDo("HDEL", "aliveUser", k)
 		}
 	}
