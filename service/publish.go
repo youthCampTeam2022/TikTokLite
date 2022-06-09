@@ -199,7 +199,7 @@ func CreateVideo(v *model.Video) error {
 func GetVideoList(userId, toUserId int64) ([]Video, error) {
 	followService := NewFollowService()
 	//数据库表格式的videos
-	videos, err := model.GetVideosByUserId(userId)
+	videos, err := model.GetVideosByUserId(toUserId)
 	if err != nil {
 		log.Println("getVideosByUserId failed:", err)
 		return nil, err
