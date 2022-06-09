@@ -30,23 +30,15 @@ func Publish(c *gin.Context) {
 		ResponseError(c, 1, err)
 		return
 	}
-	//截取封面，上传视频和封面并返回外链
-	playUrl, coverUrl, err := service.PublishVideo(data, userId.(int64), c)
-	if err != nil {
-		log.Println("publish failed，err：", err)
-		ResponseError(c, 1, err)
-	}
 	video := model.Video{
 		AuthorId: userId.(int64),
 		Title:    title,
-		PlayUrl:  playUrl,
-		CoverUrl: coverUrl,
 	}
-	err = service.CreateVideo(&video)
+	//截取封面，上传视频和封面并返回外链
+	err = service.PublishVideo(data, userId.(int64), video, c)
 	if err != nil {
-		log.Println("视频信息写入数据库失败")
+		log.Println("publish failed，err：", err)
 		ResponseError(c, 1, err)
-		return
 	}
 	c.JSON(http.StatusOK, service.Response{
 		StatusCode: 0,
