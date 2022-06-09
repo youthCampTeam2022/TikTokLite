@@ -81,8 +81,8 @@ func PublishVideo(data *multipart.FileHeader, userId int64, c *gin.Context) (str
 	}
 	playUrl = fmt.Sprintf("http://%s:%d/static/videos/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, videoName)
 	coverUrl = fmt.Sprintf("http://%s:%d/static/covers/?name=%s", setting.Conf.LocalIP, setting.Conf.Port, coverName)
-	//playUrl = fmt.Sprintf("http://0.0.0.0:0000/static/videos/?name=%s", videoName)
-	//coverUrl = fmt.Sprintf("http://0.0.0.0:0000/static/covers/?name=%s", coverName)
+	//playUrl = fmt.Sprintf("http://119.91.138.130:9999/static/videos/?name=%s", videoName)
+	//coverUrl = fmt.Sprintf("http://119.91.138.130:9999/static/covers/?name=%s", coverName)
 	return playUrl, coverUrl, nil
 }
 
@@ -96,7 +96,7 @@ func uploadVideoToCloud(videoPath, videoName string) error {
 	contenType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
-	url := fmt.Sprintf("http://0.0.0.0:0000/upload_video?video_name=%s", videoName)
+	url := fmt.Sprintf("http://119.91.138.130:9999/upload_video?video_name=%s", videoName)
 	http.Post(url, contenType, &buf)
 	return nil
 }
@@ -110,7 +110,7 @@ func uploadCoverToCloud(coverPath, coverName string) error {
 	contenType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
-	url := fmt.Sprintf("http://0.0.0.0:0000/upload_cover?cover_name=%s", coverName)
+	url := fmt.Sprintf("http://119.91.138.130:9999/upload_cover?cover_name=%s", coverName)
 	http.Post(url, contenType, &buf)
 	return nil
 }
@@ -173,7 +173,7 @@ func CreateVideo(v *model.Video) error {
 func GetVideoList(userId, toUserId int64) ([]Video, error) {
 	followService := NewFollowService()
 	//数据库表格式的videos
-	videos, err := model.GetVideosByUserId(userId)
+	videos, err := model.GetVideosByUserId(toUserId)
 	if err != nil {
 		log.Println("getVideosByUserId failed:", err)
 		return nil, err
