@@ -11,13 +11,13 @@ func GetCommentByJoin(videoID int64, userID int64) ([]model.CommentRes, error) {
 	return model.GetCommentRes(videoID, userID)
 }
 
-func CreateComment(videoID, userID int64, text string) error {
+func CreateComment(videoID, userID int64, text string) (model.Comment, error) {
 	c := model.Comment{
 		VideoID: videoID,
 		UserID:  userID,
 		Content: text,
 	}
-	return c.Create()
+	return c, c.Create()
 }
 
 func DeleteComment(userID, commentID int64) error {

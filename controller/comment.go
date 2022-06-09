@@ -3,6 +3,7 @@ package controller
 import (
 	"TikTokLite/model"
 	"TikTokLite/service"
+	"TikTokLite/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -25,18 +26,11 @@ func CommentAction(c *gin.Context) {
 	commentID, _ := strconv.Atoi(commentIDQuery)
 	actionType, _ := strconv.Atoi(actionTypeQuery)
 	userID := userIDToken.(int64)
-
+	resComment := service.Comment{}
 	if actionType == 1 {
 		//评论过滤器，检测敏感词
 		comment, _ := service.CommentFilter(commentTextQuery)
-		//if !ok {
-		//	c.JSON(http.StatusInternalServerError, service.Response{
-		//		StatusCode: 4,
-		//		StatusMsg:  "too many sensitive words",
-		//	})
-		//	return
-		//}
-		err := service.CreateComment(int64(videoID), userID, comment)
+		comm, err := service.CreateComment(int64(videoID), userID, comment)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 5,
@@ -44,6 +38,11 @@ func CommentAction(c *gin.Context) {
 			})
 			return
 		}
+		//获取comment返回
+		resComment.Id = int64(comm.ID)
+		resComment.Content = comm.Content
+		resComment.CreateDate = util.Time2String(comm.CreatedAt)
+		resComment.User = service.BuildUser(userID, userID, model.NewFollowManagerRepository())
 	} else if actionType == 2 {
 		err := service.DeleteComment(userID, int64(commentID))
 		if err != nil {
@@ -60,9 +59,10 @@ func CommentAction(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, service.Response{
-		StatusCode: 0,
-		StatusMsg:  "ok",
+	c.JSON(http.StatusOK, gin.H{
+		"status_code": 0,
+		"status_msg":  "ok",
+		"comment":     resComment,
 	})
 }
 

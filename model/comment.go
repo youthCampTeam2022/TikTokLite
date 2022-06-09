@@ -2,7 +2,6 @@ package model
 
 import (
 	"TikTokLite/util"
-	"errors"
 	"gorm.io/gorm"
 	"time"
 )
@@ -34,7 +33,7 @@ func GetCommentRes(videoID int64, userID int64) (comments []CommentRes, err erro
 	f := FollowManagerRepository{DB, RedisCache}
 	rows, err := DB.Raw("SELECT comments.id,comments.content,comments.created_at,users.id,users.name "+
 		"FROM comments INNER JOIN users ON comments.user_id = users.id "+
-		"WHERE comments.deleted_at is null and video_id = ?", videoID).Rows()
+		"WHERE comments.deleted_at is null and video_id = ? order by comments.id desc", videoID).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +55,7 @@ func GetCommentRes(videoID int64, userID int64) (comments []CommentRes, err erro
 
 func (c *Comment) Create() error {
 	err := DB.Create(&c).Error
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	IncrCommentRedis(c.VideoID)
@@ -65,7 +64,7 @@ func (c *Comment) Create() error {
 
 func (c *Comment) Delete() error {
 	err := DB.Delete(&c).Error
-	if err!= nil{
+	if err != nil {
 		return err
 	}
 	DecrCommentRedis(c.VideoID)
@@ -73,12 +72,9 @@ func (c *Comment) Delete() error {
 }
 
 func (c *Comment) DeleteByUser() error {
-	var uid Comment
-	DB.Model(&c).First(&uid)
-	if uid.UserID == c.UserID {
-		return DB.Delete(&c).Error
-	}
-	return errors.New("invalid delete")
+	DecrCommentRedis(c.VideoID)
+	return DB.Where("id=? AND user_id=?", c.ID, c.UserID).Delete(&Comment{}).Error
+	//return errors.New("invalid delete")
 }
 
 func GetCommentNum(videoID int64) (count int64) {
