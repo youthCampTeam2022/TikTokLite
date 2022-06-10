@@ -20,12 +20,13 @@ func CreateComment(videoID, userID int64, text string) (model.Comment, error) {
 	return c, c.Create()
 }
 
-func DeleteComment(userID, commentID int64) error {
+func DeleteComment(userID, commentID, videoID int64) error {
 	c := model.Comment{
 		Model: gorm.Model{
 			ID: uint(commentID),
 		},
-		UserID: userID,
+		UserID:  userID,
+		VideoID: videoID,
 	}
 	return c.DeleteByUser()
 }

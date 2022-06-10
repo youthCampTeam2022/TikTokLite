@@ -44,7 +44,7 @@ func CommentAction(c *gin.Context) {
 		resComment.CreateDate = util.Time2String(comm.CreatedAt)
 		resComment.User = service.BuildUser(userID, userID, model.NewFollowManagerRepository())
 	} else if actionType == 2 {
-		err := service.DeleteComment(userID, int64(commentID))
+		err := service.DeleteComment(userID, int64(commentID), int64(videoID))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, service.Response{
 				StatusCode: 6,
