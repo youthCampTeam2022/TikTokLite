@@ -32,14 +32,21 @@ func (f *Favorite) UniqueInsert() error {
 	if FirstRes.ID != 0 {
 		return errors.New("repeat favorite")
 	}
+	err := f.Create()
+	if err != nil {
+		return err
+	}
 	IncrFavoriteRedis(f.VideoID)
-	return f.Create()
+	return nil
 }
 
 func (f *Favorite) Delete() error {
+	err := DB.Where("user_id=? AND video_id=?", f.UserID, f.VideoID).Unscoped().Delete(&Favorite{}).Error
+	if err != nil{
+		return err
+	}
 	DecrFavoriteRedis(f.VideoID)
-	return DB.Where("user_id=? AND video_id=?", f.UserID, f.VideoID).Unscoped().
-		Delete(&Favorite{}).Error
+	return nil
 }
 
 // GetFavoriteNum count获取点赞数
