@@ -47,6 +47,9 @@ type User struct {
 	FollowCount   int64  `json:"follow_count,omitempty"`
 	FollowerCount int64  `json:"follower_count,omitempty"`
 	IsFollow      bool   `json:"is_follow,omitempty"`
+	TotalFavorited int64 `json:"total_favorited,omitempty"`
+	FavoriteCount int64 `json:"favorite_count,omitempty"`
+	WorkCount int64 `json:"work_count,omitempty"`
 }
 
 //BuildUserList 通用接口，传入user_id集合和follow仓库接口，返回[]User（Id，Name，FollowCount，FollowerCount，IsFollow）
@@ -67,6 +70,9 @@ func BuildUser(userID, toUserID int64, m model.IFollowRepository) User {
 	user.IsFollow = m.RedisIsFollow(userID, toUserID)
 	user.FollowCount = m.RedisFollowCount(toUserID)
 	user.FollowerCount = m.RedisFollowerCount(toUserID)
+	user.TotalFavorited = model.GetTotalFavoritedRedis(toUserID)
+	user.WorkCount = model.GetTotalWorkCount(toUserID)
+	user.FavoriteCount = model.GetUserFavoriteNum(toUserID)
 	return user
 }
 

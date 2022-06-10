@@ -128,9 +128,7 @@ func GetUserFeedRedis(latestTime time.Time, userId int64) ([]int64, error) {
 	userFeedTimeStamp := fmt.Sprintf("%s:%s", id, "feedtimestamp")
 	timeStamp, err = redis.Int64(conn.Do("GET", userFeedTimeStamp))
 	if err == redis.ErrNil || offset == 0 {
-		//timeStamp = latestTime.UnixMilli()
 		timeStamp = time.Now().UnixMilli()
-		//_,_=conn.Do("SET", userFeedTimeStamp, timeStamp)
 		_, _ = conn.AsyncDo("SET", userFeedTimeStamp, timeStamp)
 	}
 	var vals []int64
@@ -149,7 +147,6 @@ func GetUserFeedRedis(latestTime time.Time, userId int64) ([]int64, error) {
 			}
 		}
 	}
-	//_, _ = conn.Do("SET", userOffset, offset)
 	_, _ = conn.AsyncDo("SET", userOffset, offset)
 	return vals, nil
 }
@@ -158,4 +155,14 @@ func GetVideoByID(videoID int64) (Video, error) {
 	var video Video
 	err := DB.Where("id=?", videoID).First(&video).Error
 	return video, err
+}
+
+func GetTotalWorkCount(userID int64)(count int64) {
+	DB.Model(&Video{}).Where("author_id = ?", userID).Count(&count)
+	return
+}
+
+func GetVideoIDsByUser(userID int64)(ids []int64)  {
+	DB.Model(&Video{}).Where("author_id = ?", userID).Select("id").Scan(&ids)
+	return
 }

@@ -47,7 +47,6 @@ func SetFavoriteNumRedis(videoID int64, num int64) {
 }
 
 func IncrFavoriteRedis(videoID int64) {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
@@ -61,7 +60,6 @@ func IncrFavoriteRedis(videoID int64) {
 }
 
 func DecrFavoriteRedis(videoID int64) {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
@@ -94,4 +92,15 @@ func GetTopFavorite(n int) (top map[int64]int) {
 		top[FavoriteKey2ID(key)] = int(v)
 	}
 	return top
+}
+
+func GetTotalFavoritedRedis(userID int64)(count int64){
+	arr := GetVideoIDsByUser(userID)
+	if len(arr) == 0 {
+		return 0
+	}
+	for _, val := range arr {
+		count += GetFavoriteNumRedis(val)
+	}
+	return count
 }

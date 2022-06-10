@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetCommentByJoin 改用联查的版本，原来的太蠢了
+// GetCommentByJoin 改用联查的版本
 func GetCommentByJoin(videoID int64, userID int64) ([]model.CommentRes, error) {
 	return model.GetCommentRes(videoID, userID)
 }

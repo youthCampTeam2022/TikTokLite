@@ -26,6 +26,7 @@ func (f *Favorite) Create() error {
 	return DB.Create(&f).Error
 }
 
+// UniqueInsert 判断是否已经点赞，若未点赞，进行点赞并redis计数
 func (f *Favorite) UniqueInsert() error {
 	var FirstRes Favorite
 	_ = DB.Model(&Favorite{}).Where("video_id = ? and user_id = ?", f.VideoID, f.UserID).First(&FirstRes).Error
@@ -55,6 +56,13 @@ func GetFavoriteNum(videoID int64) (count int64) {
 	return
 }
 
+// GetUserFavoriteNum 获取用户点赞视频总数
+func GetUserFavoriteNum(userID int64) (count int64) {
+	DB.Model(&Favorite{}).Where("user_id = ?", userID).Count(&count)
+	return
+}
+
+// IsFavorite 判断是否已点赞
 func IsFavorite(userId, videoId int64) (bool, error) {
 	var count int64
 	err := DB.Model(&Favorite{}).Where("video_id = ? and user_id = ?", videoId, userId).Count(&count).Error
@@ -64,6 +72,7 @@ func IsFavorite(userId, videoId int64) (bool, error) {
 	return count > 0, err
 }
 
+// GetFavoriteRes 联查获取user喜欢的所有video相关信息
 func GetFavoriteRes(userID int64) (videos []VideoRes, err error) {
 	f := FollowManagerRepository{DB, RedisCache}
 	rows, err := DB.Raw("select favorites.video_id,videos.author_id,videos.play_url,videos.cover_url,videos.title "+
@@ -88,6 +97,9 @@ func GetFavoriteRes(userID int64) (videos []VideoRes, err error) {
 			FollowCount:   f.RedisFollowCount(videoRes.Author.Id),
 			FollowerCount: f.RedisFollowerCount(videoRes.Author.Id),
 			IsFollow:      f.RedisIsFollow(userID, videoRes.Author.Id),
+			TotalFavorited: GetTotalFavoritedRedis(videoRes.Author.Id),
+			WorkCount: 		GetTotalWorkCount(videoRes.Author.Id),
+			FavoriteCount: 	GetFavoriteNum(videoRes.Author.Id),
 		}
 		videos = append(videos, videoRes)
 	}

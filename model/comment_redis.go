@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	//"github.com/gomodule/redigo/redis"
 	"github.com/gistao/RedisGo-Async/redis"
 	"log"
@@ -10,6 +9,7 @@ import (
 
 const CommentSet = "commentSet"
 
+// GetCommentNumRedis 优先从redis里获取评论数
 func GetCommentNumRedis(videoID int64) (count int64) {
 	conn := RedisCache.Conn()
 	defer func() {
@@ -19,13 +19,13 @@ func GetCommentNumRedis(videoID int64) (count int64) {
 	num, err := redis.Int64(conn.Do("ZSCORE", CommentSet, commentKey))
 	if err != nil {
 		count = GetCommentNum(videoID)
-		fmt.Println(count)
 		SetCommentNumRedis(videoID, count)
 		return
 	}
 	return num
 }
 
+// ID2CommentKey videoID转CommentKey
 func ID2CommentKey(videoID int64) string {
 	return "comment:" + strconv.FormatInt(videoID, 10)
 }
@@ -49,13 +49,11 @@ func SetCommentNumRedis(videoID int64, num int64) {
 }
 
 func IncrCommentRedis(videoID int64) {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
 	favoriteKey := ID2CommentKey(videoID)
-	//_, err := conn.Do("ZINCRBY", CommentSet, 1, favoriteKey)
 	_, err := conn.AsyncDo("ZINCRBY", CommentSet, 1, favoriteKey)
 	if err != nil {
 		log.Print("err in IncrCommentRedis:", err)
@@ -64,13 +62,11 @@ func IncrCommentRedis(videoID int64) {
 }
 
 func DecrCommentRedis(videoID int64) {
-	//conn := RedisCache.Conn()
 	conn := RedisCache.AsynConn()
 	defer func() {
 		_ = conn.Close()
 	}()
 	favoriteKey := ID2CommentKey(videoID)
-	//_, err := conn.Do("ZINCRBY", CommentSet, -1, favoriteKey)
 	_, err := conn.AsyncDo("ZINCRBY", CommentSet, -1, favoriteKey)
 	if err != nil {
 		log.Print("err in DecrCommentRedis:", err)
@@ -97,6 +93,5 @@ func GetTopComment(n int) (top map[int64]int) {
 		}
 		top[CommentKey2ID(key)] = int(v)
 	}
-	//fmt.Println("topComm:",top)
 	return top
 }
