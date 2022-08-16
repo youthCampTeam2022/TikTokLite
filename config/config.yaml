@@ -21,15 +21,15 @@ publish:
     #publish mode, true : qi niu cloud ; false : local storage (Enter the external IP address of the local host)
     mode: false
     #access url prefix
-    qi_niu_cloud_play_url_prefix: "http://rc2j71u7u.hn-bkt.clouddn.com/videos/"
-    qi_niu_cloud_cover_url_prefix: "http://rc2j71u7u.hn-bkt.clouddn.com/covers/"
+    qi_niu_cloud_play_url_prefix: ""
+    qi_niu_cloud_cover_url_prefix: ""
     #Enter the external IP address of the local host
-    local_ip_address: "121.4.34.160"
+    local_ip_address: ""
     #local storage path prefix
     video_path_prefix: "./public/videos/"
     cover_path_prefix: "./public/covers/"
     #qiniucloud api key
-    access_key: "_ZFgV0-F11X84PzjKG4NzJvZKCw6DtupRPbLizAa"
-    secret_key: "T857jrpAW1BT5QZlW7GuDzNthC2NRgTe5NEthvW8"
+    access_key: ""
+    secret_key: ""
     #qiniucloud buket name
     bucket_name: "tiktoklite-feed"
